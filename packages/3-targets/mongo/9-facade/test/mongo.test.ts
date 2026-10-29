@@ -235,7 +235,7 @@ describe('mongo() facade', () => {
 
     await db.connect({ url: 'mongodb://localhost:27017/first' });
     await expect(db.connect({ url: 'mongodb://localhost:27017/second' })).rejects.toThrow(
-      'Mongo client already connected',
+      'Mongo client is already bound',
     );
   });
 

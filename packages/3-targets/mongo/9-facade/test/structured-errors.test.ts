@@ -226,15 +226,15 @@ describe('facade lifecycle structured codes', () => {
     });
   });
 
-  it('second connect() raises DRIVER.ALREADY_CONNECTED', async () => {
+  it('connect(options) after connect() raises DRIVER.ALREADY_CONNECTED', async () => {
     const db = mongo({ contract: fakeContract, url: 'mongodb://localhost:27017/mydb' });
     await db.connect();
 
-    const error = await captureAsync(() => db.connect());
+    const error = await captureAsync(() => db.connect({ url: 'mongodb://localhost:27017/mydb' }));
     expect(isStructuredError(error)).toBe(true);
     expect(error).toMatchObject({
       code: 'DRIVER.ALREADY_CONNECTED',
-      message: 'Mongo client already connected',
+      message: 'Mongo client is already bound',
       meta: { extension: 'mongo' },
     });
   });
