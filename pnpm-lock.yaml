@@ -2171,6 +2171,9 @@ importers:
       '@internal/framework-components':
         specifier: workspace:8.0.0-rc.21
         version: link:../../../1-framework/1-core/framework-components
+      '@internal/mongo-codec':
+        specifier: workspace:8.0.0-rc.21
+        version: link:../../1-foundation/mongo-codec
       '@internal/mongo-contract':
         specifier: workspace:8.0.0-rc.21
         version: link:../../1-foundation/mongo-contract

@@ -1,5 +1,5 @@
 import { MongoDriverImpl } from '@internal/driver-mongo';
-import { AsyncIterableResult } from '@internal/framework-components/runtime';
+import { AsyncIterableResult, type RuntimeMode } from '@internal/framework-components/runtime';
 import type {
   AnyMongoTypeMaps,
   MongoContract,
@@ -41,7 +41,7 @@ export interface MongoClient<
 }
 
 export interface MongoOptionsBase {
-  readonly mode?: 'strict' | 'permissive';
+  readonly mode?: RuntimeMode;
   /**
    * Optional middleware chain applied to every Mongo execution.
    */
@@ -86,8 +86,7 @@ export default function mongo<
   const contract = validateMongoContract(options.contract);
   let binding = resolveOptionalMongoBinding(options);
 
-  const { context, query, enums, enumsByNamespace, raw } =
-    buildMongoStaticContext<TContract>(contract);
+  const { context, stack, query, enums, raw } = buildMongoStaticContext<TContract>(contract);
 
   // Single source of truth for the lifecycle. `runtimePromise` is the in-flight
   // or settled build; `closed` is the terminal state set by `close()`. A failed
@@ -106,6 +105,7 @@ export default function mongo<
     }
     return createMongoRuntime({
       context,
+      adapter: stack.adapter.create(stack),
       driver,
       ...ifDefined('mode', options.mode),
       ...ifDefined('middleware', options.middleware),
@@ -150,10 +150,8 @@ export default function mongo<
   }
 
   const orm = mongoOrm<TContract>({
-    contract,
-    executor: { query: queryRows, execute: executeStats },
-    mutationDefaults: context,
-    enums: enumsByNamespace,
+    context,
+    runtime: { query: queryRows, execute: executeStats },
   });
 
   return {

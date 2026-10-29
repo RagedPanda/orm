@@ -1032,7 +1032,7 @@ An aggregate was invoked for an operation/input pair the composed target declare
 
 ### ORM.ARGUMENT_INVALID
 
-A method argument on the ORM client, or on the `sql()` / Mongo query-builder DSLs, is malformed or missing a required part: a `null` where-arg, `upsert()` without conflict columns or without a create value for a conflict column, a custom collection given as an instance / for a nonexistent model in a client's `collections` option or `orm({ collections })`, invalid builder argument shapes, `$and`/`$or` with no expressions, a limit, offset or skip that is negative or not an integer, malformed lookup/group/update specs, a row-locking method (`forUpdate()`, `forNoKeyUpdate()`, `forShare()`, `forKeyShare()`) given both `nowait` and `skipLocked`, or a `variant()` call whose value is not a declared discriminator value of the receiver model, or on a model with no discriminator (SQL and Mongo ORMs; the payload adds `value` and `declaredValues`). The Mongo ORM also raises it when `mongoOrm()` is given `enums` without an accessor for an enum the contract declares (`argument: 'enums'`, `namespace`, `enum`), and when a write through `createMongoCollection()` finds no accessor for the field's enum (`argument: 'enums'`, `enum`); pass `buildMongoEnums(contract, context.codecs)`. For SQL, the limit/offset check runs in relational-core when the `SelectAst` is constructed, so every SQL lane and target raises it before any SQL is rendered. That check also refuses integers above `Number.MAX_SAFE_INTEGER`, and does not check a limit or offset bound as a parameter. Payload: `method`, `argument` (`limit` or `offset` for the SQL limit/offset check), `model`, `column`, `key`. The `sql()` builder also raises it when a table's `indexes` is read by a name that more than one of its indexes shares (payload: `namespaceId`, `tableName`, `index`). It also raises it when a query is built with a column of an alias that is not one of the query's sources, such as one from an index read from `table.as('other').indexes` (payload: `alias`, `column`, `sources`).
+A method argument on the ORM client, or on the `sql()` / Mongo query-builder DSLs, is malformed or missing a required part: a `null` where-arg, `upsert()` without conflict columns or without a create value for a conflict column, a custom collection given as an instance / for a nonexistent model in a client's `collections` option or `orm({ collections })`, invalid builder argument shapes, `$and`/`$or` with no expressions, a limit, offset or skip that is negative or not an integer, malformed lookup/group/update specs, a row-locking method (`forUpdate()`, `forNoKeyUpdate()`, `forShare()`, `forKeyShare()`) given both `nowait` and `skipLocked`, or a `variant()` call whose value is not a declared discriminator value of the receiver model, or on a model with no discriminator (SQL and Mongo ORMs; the payload adds `value` and `declaredValues`). For SQL, the limit/offset check runs in relational-core when the `SelectAst` is constructed, so every SQL lane and target raises it before any SQL is rendered. That check also refuses integers above `Number.MAX_SAFE_INTEGER`, and does not check a limit or offset bound as a parameter. Payload: `method`, `argument` (`limit` or `offset` for the SQL limit/offset check), `model`, `column`, `key`. The `sql()` builder also raises it when a table's `indexes` is read by a name that more than one of its indexes shares (payload: `namespaceId`, `tableName`, `index`). It also raises it when a query is built with a column of an alias that is not one of the query's sources, such as one from an index read from `table.as('other').indexes` (payload: `alias`, `column`, `sources`).
 
 ### ORM.CAPABILITY_MISSING
 
@@ -1089,10 +1089,6 @@ The Mongo ORM client was asked to operate on a model name that is not in the con
 ### ORM.MUTATION_DATA_MISSING
 
 `create()` or `createAndCount()` was called with zero rows; at least one row of data is required. Payload: `method`, `namespaceId`, `tableName`.
-
-### ORM.MUTATION_DEFAULTS_MISSING
-
-`mongoOrm()` was built over a contract with execution defaults (fields such as `temporal.CreatedAt` that the ORM fills on write) without `mutationDefaults`, so those fields would never be written. Pass the execution context, `mongoOrm({ contract, executor, mutationDefaults: context })`, or create the client with `mongo()`. Payload: `fields` (`<collection>.<field>` for each default).
 
 ### ORM.MUTATION_ROW_MISSING
 
@@ -1214,7 +1210,7 @@ A codec descriptor handed to a target codec-descriptor registry (Postgres, SQLit
 
 ### RUNTIME.CODEC_DESCRIPTOR_MISSING
 
-A column, a domain enum, or an AST-carried CodecRef references a `codecId` for which no runtime component registered a codec descriptor: usually the extension pack that owns the codec is missing from the runtime stack. Surfaces at SQL context construction during the contract codec walk, when a SQL or Mongo client builds `db.enums` (for Mongo, in `buildMongoEnums`, which also builds the accessors `mongoOrm()` takes), or lazily when the AST codec resolver materializes a codec at query time. Payload: `codecId`; on the column path also `table`, `column`.
+A column, a domain enum, or an AST-carried CodecRef references a `codecId` for which no runtime component registered a codec descriptor: usually the extension pack that owns the codec is missing from the runtime stack. Surfaces at SQL context construction during the contract codec walk, when a SQL or Mongo client builds `db.enums` (for Mongo, also when `mongoOrm()` builds the accessors it checks written enum values against), or lazily when the AST codec resolver materializes a codec at query time. Payload: `codecId`; on the column path also `table`, `column`.
 
 ### RUNTIME.CODEC_MISSING
 

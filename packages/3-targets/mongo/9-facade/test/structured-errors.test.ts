@@ -25,7 +25,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@internal/adapter-mongo/runtime', () => ({ default: { id: 'adapter' } }));
 vi.mock('@internal/target-mongo/runtime', () => ({ default: { id: 'target' } }));
 vi.mock('@internal/mongo-runtime', async (importOriginal) => ({
-  buildMongoEnums: (await importOriginal<typeof MongoRuntime>()).buildMongoEnums,
+  enumMemberCodecFor: (await importOriginal<typeof MongoRuntime>()).enumMemberCodecFor,
   createMongoExecutionStack: mocks.createMongoExecutionStack,
   createMongoExecutionContext: mocks.createMongoExecutionContext,
   createMongoRuntime: mocks.createMongoRuntime,
@@ -47,7 +47,9 @@ vi.mock('@internal/mongo-orm', () => ({
   mongoOrm: mocks.mongoOrm,
   mongoRaw: mocks.mongoRaw,
 }));
-vi.mock('@internal/mongo-query-builder', () => ({ mongoQuery: mocks.mongoQuery }));
+vi.mock('@internal/mongo-query-builder', () => ({
+  mongoQuery: mocks.mongoQuery,
+}));
 
 import { resolveMongoBinding, resolveOptionalMongoBinding } from '../src/runtime/binding';
 import mongo from '../src/runtime/mongo';
@@ -180,8 +182,15 @@ describe('facade lifecycle structured codes', () => {
       fn.mockReset();
     }
     mocks.deserializeContract.mockReturnValue(fakeContract);
-    mocks.createMongoExecutionStack.mockReturnValue({ id: 'stack' });
-    mocks.createMongoExecutionContext.mockReturnValue({ id: 'context' });
+    mocks.createMongoExecutionStack.mockReturnValue({
+      id: 'stack',
+      adapter: { create: () => ({ id: 'adapter' }) },
+    });
+    mocks.createMongoExecutionContext.mockReturnValue({
+      id: 'context',
+      contract: { domain: { namespaces: { __unbound__: {} } } },
+      codecs: { get: () => undefined },
+    });
     mocks.driverFromConnection.mockResolvedValue({
       id: 'driver',
       close: vi.fn().mockResolvedValue(undefined),
