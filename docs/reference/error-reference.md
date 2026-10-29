@@ -344,6 +344,8 @@ A model declares an empty unique constraint (a unique with no fields), raised du
   - an enum and a native enum would derive the same value set (meta: `namespaceId`, `name`);
   - a native enum has no value set holding its members (meta: `namespaceId`, `typeName`);
   - a native enum has its own control policy (meta: `namespaceId`, `typeName`, `control`).
+- Extensions:
+  - an extension has its own control policy (meta: `namespaceId`, `name`, `control`).
 - Namespaces, meta and roots:
   - a storage or domain namespace holds nothing PSL writes, or the contract lacks a namespace the PSL source would create, such as the default namespace (meta: `plane`, `namespaceId`);
   - a namespace is named `unbound` and is not the late-binding namespace, which PSL writes as `namespace unbound` (meta: `namespaceId`);
@@ -356,7 +358,7 @@ A model declares an empty unique constraint (a unique with no fields), raised du
   - a policy is on a table without row-level security (meta: `namespaceId`, `table`, `name`);
   - a wire-named policy's name is not its block name followed by the hash of its content (meta: `namespaceId`, `table`, `name`);
   - a role is declared outside the unbound namespace (meta: `namespaceId`, `name`);
-  - a row-level security setting or role is filed under a key the PSL source would not file it under (meta: `namespaceId`, `kind`, `name`);
+  - a row-level security setting, role or extension is filed under a key the PSL source would not file it under (meta: `namespaceId`, `kind`, `name`);
   - a row-level security setting, role or policy records a namespace other than the one it is stored in (meta: `namespaceId`, `kind`, `name`).
 - Names and storage entries:
   - a table or column is named `__proto__`, which the PSL source loses when it reads the name from `@@map` or `@map` (meta: `kind`, `name`);
@@ -533,7 +535,7 @@ The contract module at the configured path loads but exposes neither a `default`
 
 ### CONTRACT.NAME_DUPLICATE
 
-Two declarations claim the same name: duplicate namespace entries, model names, value objects, relations, tables (two models mapping to one table, two table nodes for one table, or duplicate table in a namespace), column mappings (two fields to one column, a field and a table node's column node for one column, or two column nodes for one column), stored names (two fields of one MongoDB model stored under one name with `.mongo({ field })`: `Model "<Model>" stores both "<a>" and "<b>" as "<name>".`, `kind: 'field'`), indexes, value-sets (enum and pack entity minting the same value-set), or pack entities of the same kind and name in one namespace. Raised while authoring/building a contract. Payload: `kind`, `name`, `namespaceId`, `tableName` (for a column), `first`, `second`. A MongoDB variant field stored under a name a field of its base is stored under, the discriminator included, is refused too (`reason: 'stored-name-shared-with-base'`, with `first` the base's field and `second` the variant's): a variant's documents hold its base's fields, so the two would overwrite each other. Mongo PSL reports it as `PSL_DUPLICATE_STORED_NAME`.
+Two declarations claim the same name: duplicate namespace entries, model names, value objects, relations, tables (two models mapping to one table, two table nodes for one table, or duplicate table in a namespace), column mappings (two fields to one column, a field and a table node's column node for one column, or two column nodes for one column), stored names (two fields of one MongoDB model stored under one name with `.mongo({ field })`: `Model "<Model>" stores both "<a>" and "<b>" as "<name>".`, `kind: 'field'`), indexes, value-sets (enum and pack entity minting the same value-set), or pack entities of the same kind and name in one namespace. A Postgres extension is unique across the whole contract: one declared in two namespaces is refused while building a contract and again when a contract is read (`kind: 'extension'`, `namespaces`). Payload: `kind`, `name`, `namespaceId`, `tableName` (for a column), `first`, `second`. A MongoDB variant field stored under a name a field of its base is stored under, the discriminator included, is refused too (`reason: 'stored-name-shared-with-base'`, with `first` the base's field and `second` the variant's): a variant's documents hold its base's fields, so the two would overwrite each other. Mongo PSL reports it as `PSL_DUPLICATE_STORED_NAME`.
 
 ### CONTRACT.NAMESPACE_INVALID
 
@@ -780,6 +782,22 @@ A `map` on `@id`, `@@id`, `@unique`, `@@unique`, `@@index` or `@relation` is lon
 ### PSL.PRISMA7_ENUM_NAMESPACE_MISMATCH
 
 A field uses an enum declared under a different `@@schema`; a Postgres enum lives in one schema and a Prisma 8 column references the enum of its own namespace. Declare the enum in the model's schema, or move the model. Reported by the Prisma 7 contract source (`prisma7Schema`) during `contract emit` or `contract print`, as a finding in the `diagnostics` list of `CONTRACT.SOURCE_LOAD_FAILED`, never on its own. `summary` is `<file>:<line>:<column> <message>`, with only the file when there is no position (the terminal prints the code before it), and `where` carries `path` and, when known, `line`. Payload: none.
+
+### PSL.PRISMA7_EXTENSIONS_PREVIEW_FEATURE_MISSING
+
+The datasource lists `extensions`, and no generator block lists the `postgresqlExtensions` preview feature, without which Prisma 7 refuses the schema too. Add `"postgresqlExtensions"` to `previewFeatures`. Reported by the Prisma 7 contract source (`prisma7Schema`) during `contract emit` or `contract print`, as a finding in the `diagnostics` list of `CONTRACT.SOURCE_LOAD_FAILED`, never on its own. `summary` is `<file>:<line>:<column> <message>`, with only the file when there is no position (the terminal prints the code before it), and `where` carries `path` and, when known, `line`. Payload: none.
+
+### PSL.PRISMA7_EXTENSION_ARGUMENT_UNSUPPORTED
+
+A listed extension has an argument the contract cannot describe: `version:`, because the contract does not record an extension's version, or `map:`. Remove `version:`; replace `name(map: "db_name")` with `db_name`. Either edit leaves Prisma 7's next migration empty. An argument Prisma 7 refuses too (one without a name, an unknown one, or a `schema:` that is not a string) is reported with this code as well. Reported by the Prisma 7 contract source (`prisma7Schema`) during `contract emit` or `contract print`, as a finding in the `diagnostics` list of `CONTRACT.SOURCE_LOAD_FAILED`, never on its own. `summary` is `<file>:<line>:<column> <message>`, with only the file when there is no position (the terminal prints the code before it), and `where` carries `path` and, when known, `line`. Payload: none.
+
+### PSL.PRISMA7_EXTENSION_PACK_MISSING
+
+A listed extension is declared by an extension pack the config does not compose: `vector` by pgvector, `postgis` by PostGIS, `pg_search` by ParadeDB. Add the pack to `extensions` in `prisma.config.ts`; the message names the import, such as `import pgvector from '@prisma/orm-extension-pgvector/control'`. Reported by the Prisma 7 contract source (`prisma7Schema`) during `contract emit` or `contract print`, as a finding in the `diagnostics` list of `CONTRACT.SOURCE_LOAD_FAILED`, never on its own. `summary` is `<file>:<line>:<column> <message>`, with only the file when there is no position (the terminal prints the code before it), and `where` carries `path` and, when known, `line`. Payload: none.
+
+### PSL.PRISMA7_EXTENSION_SCHEMA_MISMATCH
+
+A listed extension that a composed extension pack declares is put in another schema than the one the pack's contract declares it in: by its `schema:` argument, or in the default schema without one. Prisma 8 expects the extension in the pack's schema, and moving it is a database change the pack does not make. Move it with `ALTER EXTENSION "<name>" SET SCHEMA "<schema>"`, then change the entry to match; the message names both edits. Reported by the Prisma 7 contract source (`prisma7Schema`) during `contract emit` or `contract print`, as a finding in the `diagnostics` list of `CONTRACT.SOURCE_LOAD_FAILED`, never on its own. `summary` is `<file>:<line>:<column> <message>`, with only the file when there is no position (the terminal prints the code before it), and `where` carries `path` and, when known, `line`. Payload: none.
 
 ### PSL.PRISMA7_IGNORED_FIELD_REFERENCED
 
@@ -1571,7 +1589,7 @@ A contract snapshot expected under `migrations/snapshots/` for a given storage h
 
 ### MIGRATION.CONTRACT_SPACE_LAYOUT_VIOLATION
 
-The on-disk `migrations/` directory and the `extensions` declaration in config disagree: an orphan space directory exists with no declaring extension, or a declared extension has no migrations directory. All layout offences are bundled into one envelope. Raised when db commands load the contract-space aggregate. Payload: `violations` (list of `{kind, spaceId}`).
+The on-disk `migrations/` directory and the `extensions` declaration in config disagree: an orphan space directory exists with no declaring extension, or a declared extension has no migrations directory. All layout offences are bundled into one envelope. Raised when db commands load the contract-space aggregate. A declared pack's missing directory is written by `prisma contract emit` or `prisma migration plan`; an orphan directory is fixed by declaring its extension or removing the directory. Payload: `violations` (list of `{kind, spaceId}`).
 
 ### MIGRATION.CONTRACT_SPACE_VIOLATION
 
@@ -1839,9 +1857,13 @@ A migration's `from` and `to` hashes are identical and it declares no data-trans
 
 After applying migrations, the runner introspected the database and the resulting schema does not satisfy the destination contract. Postgres and SQLite roll the apply back; on MySQL, whose DDL commits as it runs, and MongoDB, whose operations are not wrapped in a transaction, the operations that ran stay applied. Either way the marker stays at its origin. `db init`, `db update` and `db migrate` report it with this code, and its `why` lists the issues ("The schema check after apply found: …"). `db migrate` names both possible causes, each as its own next action: when the contract source is wrong, change it to resolve the issues, re-emit, delete the failed migration's directory (after copying any code written in its `migration.ts`), plan it again, run its `migration.ts` with the printed `node` command, and re-run `db migrate`; when the migration's `migration.ts` does not reach its destination contract, for example after a hand edit, change its operations, run it with `node`, and re-run `db migrate`; `db update` and `db init` advise changing the contract source to resolve the issues listed, re-emitting and re-running the same command. An issue may carry an explanation, such as a raw SQL default the database stores in its own form: ``The database reads this default back as sql`(now() - '1 day'::interval)`; the contract declares sql`now() - interval '1 day'`. The database may store a default expression in its own form, so the two can mean the same. If they do, write the default as sql`(now() - '1 day'::interval)`.`` When no `sql` literal writes the database's text unchanged, the explanation suggests the trimmed text the database's parser reads, and when no literal writes that either, it says to change the default's SQL in the contract until the database stores it as written. Payload: `databaseUnchanged`, and `schemaIssues` (schema diff issues; an issue's `explanation` is `{ text, cause }`, with `cause` `differs` or `possibly-equivalent`).
 
+### MIGRATION.SIGN_INVARIANTS_MISSING
+
+A diagnostic in `db sign`, one per refused extension space: the space's head ref requires invariants that its database marker does not record. A space with no marker is refused only when its head ref lists invariants, and the application space is never refused, because its head ref is the emitted contract, which lists none. An invariant records that a migration ran, and `db sign` never runs migrations, so it cannot provide one. The refused space is reported with status `missing-invariants`; no marker, snapshot or `db` ref is written for it. When its schema also fails verification, that finding is reported with it. Every other space that verifies is signed as usual, and the command exits with code 4. The next action is `db migrate`, which runs the migrations that provide the invariants. Payload: `space`, `missingInvariants` (the missing ids, sorted).
+
 ### MIGRATION.SIGN_REFS_NOT_WRITTEN
 
-`db sign` wrote the database markers, so the database is signed, but it could not write one or more refs or the contract snapshot of the app space afterwards, for example because the refs directory is not writable. The command still tries every ref, and the error names each one it could not write and why. It also names the spaces it did not sign: those whose schema failed verification and those whose marker changed while it ran. Fix what stopped the write and run `db sign` again with the same arguments: the markers already hold the contracts, so the second run writes only the refs. Payload: `signedSpaces`, `failedSpaces`, `conflictSpaces`, `unwrittenRefs` (each with `space`, `name`, `hash`, `reason`), `advancedRefs`.
+`db sign` wrote the database markers, so the database is signed, but it could not write one or more refs or the contract snapshot of the app space afterwards, for example because the refs directory is not writable. The command still tries every ref, and the error names each one it could not write and why. It also names the spaces it did not sign: those whose schema failed verification, those whose marker changed while it ran, and those whose marker lacks invariants their head ref requires. Each of those spaces' findings, such as `MIGRATION.SIGN_INVARIANTS_MISSING`, comes with the error, and for a space that lacks invariants the error also says to run `db migrate`. Fix what stopped the write and run `db sign` again with the same arguments: the markers already hold the contracts, so the second run writes only the refs. Payload: `signedSpaces`, `failedSpaces`, `conflictSpaces`, `refusedSpaces` (each with `space` and `missingInvariants`), `unwrittenRefs` (each with `space`, `name`, `hash`, `reason`), `advancedRefs`.
 
 ### MIGRATION.SNAPSHOT_MISSING
 

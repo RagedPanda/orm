@@ -3236,9 +3236,9 @@ importers:
       '@internal/operations':
         specifier: workspace:8.0.0-rc.21
         version: link:../../1-framework/1-core/operations
-      '@internal/sql-contract-ts':
+      '@internal/sql-contract-psl':
         specifier: workspace:8.0.0-rc.21
-        version: link:../../2-sql-family/2-authoring/contract-ts
+        version: link:../../2-sql-family/2-authoring/contract-psl
       '@internal/target-postgres':
         specifier: workspace:8.0.0-rc.21
         version: link:../../3-targets/postgres/1-target
