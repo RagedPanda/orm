@@ -52,7 +52,7 @@ Codes are prefixed `PSL.PRISMA7_`:
 | `PSL.PRISMA7_RELATION_MODE_UNSUPPORTED` | `relationMode = "prisma"`, or the older `referentialIntegrity = "prisma"`. |
 | `PSL.PRISMA7_VIEW_UNSUPPORTED` | A `view` block. |
 | `PSL.PRISMA7_UNSUPPORTED_TYPE` | An unknown field type, or a type constructor other than `Unsupported(...)`. Or an `Unsupported(...)` that is not one double-quoted string (`Field "Post.search": Unsupported(...) takes one string, the column's type as the database prints it, such as Unsupported("tsvector").`), or whose text is not one type name (`Field "Post.search": Unsupported("tsvector; drop") is not one type name: <reason>`, where the reason is the `sql/raw` data type's). |
-| `PSL.PRISMA7_NATIVE_TYPE_UNSUPPORTED` | A `@db.*` type with no Prisma 8 codec (`Citext`, `Bit`, `VarBit`, `Xml`, `Oid`, `Money`, or any unknown spelling), on an ignored field or model too. |
+| `PSL.PRISMA7_NATIVE_TYPE_UNSUPPORTED` | A `@db.*` type with no Prisma 8 codec (`Citext`, or any unknown spelling), on an ignored field or model too. |
 | `PSL.PRISMA7_ENUM_NAMESPACE_MISMATCH` | A field uses an enum declared in a different `@@schema`; a Postgres enum type lives in one schema and Prisma 8 columns reference the enum of their own namespace. |
 | `PSL.PRISMA7_RELATION_UNRESOLVED` | A relation field that cannot be paired: no matching side, an ambiguous unnamed pair, a singular back-relation over a non-unique foreign key, a `fields`/`references` mismatch, or a required relation field over an optional foreign key field. |
 | `PSL.PRISMA7_REFERENTIAL_ACTION_UNSUPPORTED` | `SetNull` on a relation over a required field, or `SetDefault` over a required field with no column default. |
