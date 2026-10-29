@@ -1,6 +1,6 @@
 import mysqlAdapter from '@internal/adapter-mysql/runtime';
 import type { Contract } from '@internal/contract/types';
-import type { MysqlBinding } from '@internal/driver-mysql/runtime';
+import type { MysqlBinding, MysqlPoolOptions } from '@internal/driver-mysql/runtime';
 import mysqlDriver from '@internal/driver-mysql/runtime';
 import { UNBOUND_NAMESPACE_ID } from '@internal/framework-components/ir';
 import { createRawLane, sql as sqlBuilder } from '@internal/sql-builder/runtime';
@@ -51,6 +51,7 @@ import { mysqlClientError } from '../errors';
 import { validateMysqlContract } from '../static/contract-from-json';
 import { buildMysqlStaticContext, type MysqlStaticContext } from '../static/mysql-static';
 import { resolveMysqlBinding, resolveOptionalMysqlBinding } from './binding';
+import { validateStreamOption } from './mysql-options';
 import { MysqlRuntimeImpl } from './mysql-runtime';
 
 export type MysqlTargetId = 'mysql';
@@ -188,6 +189,11 @@ export interface MysqlOptionsBase {
   readonly verifyMarker?: VerifyMarkerOption;
   readonly log?: Log;
   readonly mode?: RuntimeMode;
+  /**
+   * Stream each query's rows as they arrive. Unset reads the whole result before the first row, as the Postgres facade does without `cursor`. It is a boolean, not Postgres's `cursor: { batchSize }`, because MySQL has no server-side cursor for a query: the server sends the whole result and the driver reads it from the socket as the caller asks for rows. A value that is not a boolean fails the factory call. While a stream on a connection is open, a statement sent on the same connection waits for it, so one awaited inside the loop over a stream in a transaction never finishes.
+   */
+  readonly stream?: boolean;
+  readonly poolOptions?: MysqlPoolOptions;
 }
 
 export type MysqlOptions<
@@ -220,6 +226,7 @@ export default function mysql<
   TContract extends Contract<SqlStorage>,
   TCollections extends CollectionClasses = NoCollectionClasses,
 >(options: MysqlOptions<TContract, TCollections>): MysqlClient<TContract, TCollections> {
+  const stream = validateStreamOption(options.stream);
   const contract = validateMysqlContract(options.contract);
   let binding = resolveOptionalMysqlBinding(options);
 
@@ -286,7 +293,10 @@ export default function mysql<
     const adapter = stack.adapter.create(stack);
     const driverDescriptor = stack.driver;
 
-    const driver = driverDescriptor.create();
+    const driver = driverDescriptor.create({
+      stream,
+      ...ifDefined('poolOptions', options.poolOptions),
+    });
     ownedDispose = () => driver.close();
     runtimeDriver = driver;
     if (binding !== undefined) {
