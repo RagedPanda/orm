@@ -48,16 +48,6 @@ async function collect<T>(iterable: AsyncIterable<T>): Promise<T[]> {
 }
 
 describe('MongoDriver', () => {
-  it('is connected when it is built, so connect() changes nothing', async () => {
-    const driver = MongoDriverImpl.fromDb(seedClient.db(dbName));
-
-    await driver.connect();
-
-    expect(await collect(driver.execute(new AggregateWireCommand('never_written', [])))).toEqual(
-      [],
-    );
-  });
-
   describe('insertOne', () => {
     const col = 'driver_insert';
 

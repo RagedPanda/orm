@@ -10,12 +10,12 @@ changes:
         - '[''"]@internal/driver-mongo[''"]'
   - id: mongo-driver-connect
     summary: |
-      `MongoDriver` from `@internal/mongo-lowering` now declares `connect(binding)`, as `SqlDriver` does, and takes the binding type as a parameter: `MongoDriver<TBinding = void>`. A driver you implement that is connected when it is built adds `async connect(): Promise<void> {}`. `createMongoRuntime` takes `MongoDriver<unknown>`. The detection matches classes that implement `MongoDriver` and object literals typed or checked as `MongoDriver`.
+      `@internal/mongo-lowering` adds `MongoQueryable`, with `execute` and `run`, as `SqlQueryable` is for SQL. `MongoDriver<TBinding = void>` extends it and adds `connect(binding)` and `close()`, as `SqlDriver<TBinding>` does. `MongoControlDriverInstance` extends `MongoQueryable`, not `MongoDriver`, so a control driver has no `connect`. `executeDdl`, `MongoRunnerDependencies.driver` and the migration runner now take `MongoQueryable`; `createMongoRuntime` takes `MongoDriver<unknown>`. Type code that only sends commands, or that receives a control driver, as `MongoQueryable`. A runtime driver you implement as `MongoDriver` adds `connect`. The detection matches classes that implement `MongoDriver` and values, parameters and return types annotated or checked as `MongoDriver`.
     detection:
       glob: "**/*.{ts,mts,cts,tsx}"
       matches:
         - 'implements\s[^{]*(?<![\w$])MongoDriver(?![\w$])'
-        - ':\s*MongoDriver(?:<[^>]*>)?\s*=\s*\{'
+        - '[\w$)]\??\s*:\s*MongoDriver(?![\w$])'
         - 'satisfies\s+MongoDriver(?![\w$])'
 ---
 
@@ -46,7 +46,23 @@ Replace `MongoDriverImpl.fromDb(client.db(dbName))` with `driver.connect({ kind:
 
 `createMongoRuntime(...)` closes the driver when the runtime closes, so keep calling `runtime.close()` and drop any separate `driver.close()`.
 
-# Implement `connect` on a Mongo driver
+# Send commands through `MongoQueryable`, connect through `MongoDriver`
+
+Code that only sends commands takes `MongoQueryable`, so it accepts a control driver and a runtime driver alike:
+
+```ts
+// Before
+async function seed(driver: MongoDriver): Promise<void> {
+  await driver.run(new CreateCollectionWireCommand('users'));
+}
+
+// After
+async function seed(driver: MongoQueryable): Promise<void> {
+  await driver.run(new CreateCollectionWireCommand('users'));
+}
+```
+
+A stub that stands in for a control driver or a runner's driver implements `MongoQueryable`. A runtime driver that implements `MongoDriver` adds `connect`:
 
 ```ts
 // Before
@@ -56,7 +72,13 @@ class StubMongoDriver implements MongoDriver {
   async close(): Promise<void> {}
 }
 
-// After
+// After, when it only sends commands
+class StubMongoDriver implements MongoQueryable {
+  execute<Row>(command: AnyMongoDmlWireCommand): AsyncIterable<Row> { ... }
+  async run(command: AnyMongoDdlWireCommand): Promise<void> { ... }
+}
+
+// After, when it is a runtime driver
 class StubMongoDriver implements MongoDriver {
   async connect(): Promise<void> {}
   execute<Row>(command: AnyMongoDmlWireCommand): AsyncIterable<Row> { ... }

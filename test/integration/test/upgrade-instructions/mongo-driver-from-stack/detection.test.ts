@@ -48,7 +48,7 @@ describe('the extension root-import detection', () => {
   });
 });
 
-describe('the extension MongoDriver connect detection', () => {
+describe('the extension MongoDriver and MongoQueryable detection', () => {
   const id = 'mongo-driver-connect';
 
   it.each([
@@ -60,15 +60,18 @@ describe('the extension MongoDriver connect detection', () => {
     ['an object literal typed with it', 'const driver: MongoDriver = {'],
     ['an object literal typed with a binding', 'const driver: MongoDriver<Binding> = {'],
     ['an object literal checked with it', '}) satisfies MongoDriver;'],
+    ['a parameter typed with it', 'async executeDdl(driver: MongoDriver, command: Command) {'],
+    ['an optional field typed with it', '  readonly driver?: MongoDriver;'],
+    ['a return type', 'function createMockDriver(): MongoDriver {'],
   ])('finds %s', (_name, content) => {
     expect(detects('extension', id, content)).toBe(true);
   });
 
   it.each([
-    ['a parameter typed with it', 'async executeDdl(driver: MongoDriver, command: Command) {'],
-    ['a return type', 'function createMockDriver(): MongoDriver {'],
+    ['a parameter typed with MongoQueryable', 'async executeDdl(driver: MongoQueryable) {'],
     ['a cast to it', '} as unknown as MongoDriver;'],
     ['a longer name', 'class Stub implements MongoDriverFactory {'],
+    ['a type argument', 'const drivers = new Map<string, MongoDriver>();'],
   ])('skips %s', (_name, content) => {
     expect(detects('extension', id, content)).toBe(false);
   });

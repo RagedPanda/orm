@@ -27,7 +27,7 @@ const notConnectedMessages: Record<DisconnectedState, string> = {
 const ALREADY_CONNECTED_MESSAGE =
   'Mongo driver already connected. Call close() before reconnecting with a new binding.';
 
-async function connectedDriver(binding: MongoBinding): Promise<MongoDriver> {
+async function connectedDriver(binding: MongoBinding): Promise<MongoDriverImpl> {
   if (binding.kind === 'mongoClient') {
     return MongoDriverImpl.fromDb(binding.client.db(binding.dbName));
   }
@@ -38,15 +38,15 @@ class MongoUnboundDriverImpl implements MongoRuntimeDriver {
   readonly familyId = 'mongo' as const;
   readonly targetId = 'mongo' as const;
 
-  #delegate: MongoDriver | null = null;
-  #connecting: Promise<MongoDriver> | null = null;
+  #delegate: MongoDriverImpl | null = null;
+  #connecting: Promise<MongoDriverImpl> | null = null;
   #disconnectedState: DisconnectedState = 'unbound';
 
   #notConnectedError(): Error {
     return structuredError('DRIVER.NOT_CONNECTED', notConnectedMessages[this.#disconnectedState]);
   }
 
-  #requireDelegate(): MongoDriver {
+  #requireDelegate(): MongoDriverImpl {
     if (this.#delegate === null) {
       throw this.#notConnectedError();
     }

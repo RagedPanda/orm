@@ -18,8 +18,8 @@ import type { MongoContract } from '@internal/mongo-contract';
 import type {
   MongoAdapter,
   MongoDdlPlan,
-  MongoDriver,
   MongoLoweredDraft,
+  MongoQueryable,
 } from '@internal/mongo-lowering';
 import type {
   AnyMongoInspectionCommand,
@@ -75,14 +75,12 @@ class EventLog {
   }
 }
 
-class StubMongoDriver implements MongoDriver {
+class StubMongoDriver implements MongoQueryable {
   readonly executeCalls: WireCommand[] = [];
   private readonly responses: Row[][] = [];
   private failure: unknown;
 
   constructor(private readonly log?: EventLog) {}
-
-  async connect(): Promise<void> {}
 
   failUpdateManyWith(error: unknown): void {
     this.failure = error;

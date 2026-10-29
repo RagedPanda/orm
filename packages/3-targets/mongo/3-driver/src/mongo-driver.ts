@@ -1,4 +1,4 @@
-import type { MongoDriver } from '@internal/mongo-lowering';
+import type { MongoQueryable } from '@internal/mongo-lowering';
 import type {
   AggregateWireCommand,
   AnyMongoDdlWireCommand,
@@ -43,7 +43,7 @@ function unreachableKind(value: never): string {
 }
 /* v8 ignore stop */
 
-export class MongoDriverImpl implements MongoDriver {
+export class MongoDriverImpl implements MongoQueryable {
   protected readonly db: Db;
   protected readonly client: MongoClient | undefined;
 
@@ -66,8 +66,6 @@ export class MongoDriverImpl implements MongoDriver {
   static fromDb(db: Db): MongoDriverImpl {
     return new MongoDriverImpl(db, undefined);
   }
-
-  async connect(): Promise<void> {}
 
   execute<Row = Record<string, unknown>>(wireCommand: AnyMongoDmlWireCommand): AsyncIterable<Row> {
     switch (wireCommand.kind) {
