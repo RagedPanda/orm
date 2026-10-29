@@ -54,7 +54,12 @@ export class MongoDriverImpl implements MongoDriver {
 
   static async fromConnection(uri: string, dbName: string): Promise<MongoDriverImpl> {
     const client = new MongoClient(uri, { driverInfo: DRIVER_INFO });
-    await client.connect();
+    try {
+      await client.connect();
+    } catch (error) {
+      await client.close();
+      throw error;
+    }
     return new MongoDriverImpl(client.db(dbName), client);
   }
 
