@@ -10,7 +10,7 @@ This page lists the projects in priority order, by stream. Work the streams in p
 
 **Progress column:** one symbol, then done/total where the row has countable units. ✅ done · 🟡 code done, waiting on review or docs · 🔄 in progress · ⏳ not started · ❓ needs a decision from Will. The units are the slices, pull requests, tickets or items the Status column names; a row with no units yet has no count.
 
-States were last checked against GitHub and Linear on 2026-10-28.
+States were last checked against GitHub and Linear on 2026-10-29.
 
 ## How far from GA
 
@@ -23,8 +23,8 @@ Counts the projects marked Must in each stream. A project counts as done only wh
 | Editor and tools | 3 of 6 (50%) | `█████░░░░░` | 1 | 2 |
 | Query features | 8 of 11 (73%) | `███████░░░` | 1 | 2 |
 | Docs and the new user's first hour | 1 of 5 (20%) | `██░░░░░░░░` | 3 | 1 |
-| Work found along the way | 0 of 2 (0%) | `░░░░░░░░░░` | 1 | 1 |
-| **All streams** | **20 of 39 (51%)** | `█████░░░░░` | **11** | **8** |
+| Work found along the way | 1 of 2 (50%) | `█████░░░░░` | 0 | 1 |
+| **All streams** | **21 of 39 (54%)** | `█████░░░░░` | **10** | **8** |
 
 ## Stream 1: Foundations and breaking changes
 
@@ -40,7 +40,7 @@ GA is the last chance to make breaking changes, so this stream decides the date.
 | 4 | ✅ 6/6 | SQL expression literals | Must | Will | Done 2026-10-12 |  |
 | 5 | ✅ 5/5 | PSL mixins, then remove field presets; generated values become `@onCreate` and `@onUpdate`, and type aliases become an authoring shorthand | Must | Serhii (mixins), Will (TML-3607) | Done 2026-10-27. Mixins done 2026-10-14. ADR 275 merged 2026-10-19. TML-3607's 3 slices merged 2026-10-20, 2026-10-22 and 2026-10-27; the last removed field presets |  |
 | 6 | ✅ 1/1 | Remove `@noCheck` and `.noCheck()` | Must | Will | Done 2026-10-16 |  |
-| 7 | 🔄 5/7 | Migration statements: the planner refuses data loss, the user states renames, deletes, conversions and backfills | Must | Will | 5 of 7 slices merged. The TypeScript MongoDB validator slice merged 2026-10-20, with a MongoDB field keeping its own name in code. Left: the rest of TML-3537 (enum values, value object fields and variants on Postgres and SQLite), and convert and backfill on MongoDB (TML-3538, backlog). TML-3537's first PR, renames, moves and deletes of Postgres namespaces, merged 2026-10-22. Its second, renames and deletes of enum values, merged 2026-10-23. Its third, value object fields and variants, is approved | Merge the value object and variants PR |
+| 7 | 🔄 5/7 | Migration statements: the planner refuses data loss, the user states renames, deletes, conversions and backfills | Must | Will | 5 of 7 slices merged. The TypeScript MongoDB validator slice merged 2026-10-20, with a MongoDB field keeping its own name in code. Left: the rest of TML-3537 (enum values, value object fields and variants on Postgres and SQLite), and convert and backfill on MongoDB (TML-3538, backlog). TML-3537's first PR, renames, moves and deletes of Postgres namespaces, merged 2026-10-22. Its second, renames and deletes of enum values, merged 2026-10-23. Its third, value object fields and variants, merged 2026-10-28. TML-3537 is still In Progress in Linear; what is left in it is not checked | Check what is left in TML-3537, then TML-3538 |
 | 8 | ✅ 4/4 | Client surfaces: a client takes a typed contract value, custom collections on every client and transaction | Must | Will | Slice 1 merged 2026-10-19; it is breaking: `postgres<Contract>({ contractJson })` became `postgres({ contract: contractFromJson<Contract>(json) })`. Slice 2, custom collections on every SQL client, merged 2026-10-20. Slice 3, a transaction offers the client's query members, merged 2026-10-20. Slice 4, a client loads without a database and renders plans as SQL, merged 2026-10-21. Done 2026-10-21 (Will). The close-out merged 2026-10-21 |  |
 
 ## Stream 2: Upgrade path from Prisma 7
@@ -55,7 +55,7 @@ Test: an existing Prisma 7 database can be signed by Prisma 8.
 | 2 | 🔄 6/7 | Prisma 8 owns migrations in a Prisma 7 project that still reads `schema.prisma` | Must | Will | Proven. Referential action changes, primary key changes, and Prisma 7's migrate commands naming their Prisma 8 replacement merged 2026-10-22. One gap is left: the datasource's extensions list (TML-3460, backlog) | Build TML-3460 |
 | 3 | ✅ 7/7 | Storage a model does not map: a table may hold columns its model does not map, and a table may have no model | Must | Will | Done 2026-10-13: 4 slices, ADR 267, the fix for a model with no fields, and the close-out merged |  |
 | 4 | ⏳ | Upgrade guide rewrite | Must | Will | Ticket in backlog. One known error in the guide |  |
-| 5 | 🔄 0/6 | Codecs for `citext`, `bit`, `varbit`, `xml`, `oid`, `money` | Must | Will | Started 2026-10-27 (TML-3270). `money` joined this row from row 9. All six built on a local branch, nothing pushed. `citext` is a new extension pack. Adopting a Prisma 7 database that uses it fails, because `db sign` does not record the pack's install step | Decide how `db sign` handles an extension's install step |
+| 5 | 🔄 0/6 | Codecs for `citext`, `bit`, `varbit`, `xml`, `oid`, `money` | Must | Will | Started 2026-10-27 (TML-3270). `money` joined this row from row 9. Split in two PRs. The first, `bit`, `varbit`, `xml`, `oid` and `money`, is in review. `citext` follows in a second PR, as a new extension pack, being built | Review the first PR |
 | 6 | ✅ 3/3 | Columns whose type has no codec | Must | Will | Done 2026-10-21 (Will). ADR 273: such a column is a raw column, `Raw("...")` in a Prisma 8 schema, and a Prisma 7 `Unsupported(...)` field is read as one. The close-out merged 2026-10-21 |  |
 | 7 | ⏳ | Adopt a Prisma 7 database without changing it: the enum membership check | Must | Will | Not designed |  |
 | 8 | ⏳ | Medium and low upgrade issues | Later | Will | Backlog | |
@@ -111,13 +111,13 @@ Test: the getting-started eval passes, in few steps and with no workarounds.
 | 2 | 🔄 0/3 | Correct the query reference in the shipped skill, which promises features that do not exist | Must, urgent | Will | 1 PR approved, 1 PR open, 3 tickets open | Merge the approved data-transforms PR, then review the back-references PR |
 | 3 | 🔄 1/11 | Docs gaps found by the eval: 11 items, 5 high | Must | Will | 1 of 11 merged. The rest not re-checked | Re-check the 11 items against prisma/web |
 | 4 | ❓ | ORM scenario for the eval: decide the project, then build it | Must | Will | Not decided | Decide the project |
-| 5 | 🔄 | Docs restructure | Must | Will | The docs audit draft is active again, updated 2026-10-22. Three new pages merged 2026-10-23: a database on your machine, Advanced PostgreSQL, and supported versions. The rc.21 docs update has changes requested | |
+| 5 | 🔄 | Docs restructure | Must | Will | The docs audit draft is active again, updated 2026-10-22. Three new pages merged 2026-10-23: a database on your machine, Advanced PostgreSQL, and supported versions. More merged 2026-10-29: Types for your code, Money and decimals, a Vercel deployment guide, and extension pages. The rc.21 docs update has changes requested | |
 | 6 | ⏳ | Document that cursor pagination starts after the cursor row | Aim | Will | Not tracked | |
 | 7 | ⏳ | Update the records that contradict the code | Aim | Will | Not started |  |
 
 ## Stream 6: Work found along the way
 
-**GA readiness:** 0 of 2 Must projects done (0%). 1 in progress, 1 not started.
+**GA readiness:** 1 of 2 Must projects done (50%). 0 in progress, 1 not started.
 
 Work found after the plan was made goes here, so the first five streams keep the scope they started with (Will, 2026-10-21).
 
@@ -125,7 +125,7 @@ Work found after the plan was made goes here, so the first five streams keep the
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | ⏳ | Remove the `unbound` / `__unbound__` namespace alias, keeping one name | Not decided | Serhii | Serhii proposed it in a docs PR to the RC plan, not merged. Not started | |
 | 2 | ⏳ | Shrink the generated contract files, so a PR's line count shows the change and not the regenerated `contract.d.ts` and `contract.json` | Must | Will | Not started, no ticket. Migration snapshots in every user's `migrations/` folder hold both files. Possibly minify them or strip whitespace (Will, 2026-10-21) |  |
-| 3 | 🔄 5/6 | Date and time usability: `DateTime`, `Date`, `Time` and `Duration` convenience types over the explicit database types; string codecs return ISO strings; a Prisma 7 `@default(now())` keeps filling the value on create | Must | Will | Started 2026-10-21. The design (ADR 279) and slices TML-3418, TML-3711, TML-3713 and TML-3719 merged 2026-10-23. TML-3710 was cancelled. Left: the convenience types themselves (TML-3712), approved | Merge TML-3712 |
+| 3 | ✅ 6/6 | Date and time usability: `DateTime`, `Date`, `Time` and `Duration` convenience types over the explicit database types; string codecs return ISO strings; a Prisma 7 `@default(now())` keeps filling the value on create | Must | Will | Started 2026-10-21. The design (ADR 279) and slices TML-3418, TML-3711, TML-3713 and TML-3719 merged 2026-10-23. TML-3710 was cancelled. The convenience types (TML-3712) merged 2026-10-28. Done 2026-10-29; the close-out merged that day |  |
 
 ## Databases
 
@@ -134,7 +134,7 @@ Work found after the plan was made goes here, so the first five streams keep the
 | PostgreSQL | Ready |
 | SQLite, MongoDB, MySQL/MariaDB | Can finish after GA. Labelled release candidate or early access until ready. They start once stream 1 has stopped changing what targets build on. |
 
-Outside the streams: MongoDB contracts written in TypeScript, PSL or Prisma 6 build through one builder (TML-3616), merged 2026-10-23; its close-out is in review. The MongoDB query builder takes an execution context like the SQL builder (TML-3686), in review.
+Outside the streams: MongoDB contracts written in TypeScript, PSL or Prisma 6 build through one builder (TML-3616), merged 2026-10-23; its close-out merged 2026-10-28. The MongoDB query builder takes an execution context like the SQL builder (TML-3686), merged 2026-10-29.
 
 ## Beside the streams
 
