@@ -2,7 +2,8 @@ import type { ControlDriverInstance } from '@internal/framework-components/contr
 import type { AnyMongoDdlWireCommand, AnyMongoDmlWireCommand } from '@internal/mongo-wire';
 import type { Db } from 'mongodb';
 
-export interface MongoDriver {
+export interface MongoDriver<TBinding = void> {
+  connect(binding: TBinding): Promise<void>;
   execute<Row>(wireCommand: AnyMongoDmlWireCommand): AsyncIterable<Row>;
   run(wireCommand: AnyMongoDdlWireCommand): Promise<void>;
   close(): Promise<void>;

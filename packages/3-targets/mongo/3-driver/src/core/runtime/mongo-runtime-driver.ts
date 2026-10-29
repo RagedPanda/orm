@@ -15,9 +15,7 @@ export type MongoBinding =
     };
 
 export type MongoRuntimeDriver = RuntimeDriverInstance<'mongo', 'mongo'> &
-  MongoDriver & {
-    connect(binding: MongoBinding): Promise<void>;
-  };
+  MongoDriver<MongoBinding>;
 
 type DisconnectedState = 'unbound' | 'closed';
 
@@ -41,23 +39,40 @@ class MongoUnboundDriverImpl implements MongoRuntimeDriver {
   readonly targetId = 'mongo' as const;
 
   #delegate: MongoDriver | null = null;
+  #connecting: Promise<MongoDriver> | null = null;
   #disconnectedState: DisconnectedState = 'unbound';
+
+  #notConnectedError(): Error {
+    return structuredError('DRIVER.NOT_CONNECTED', notConnectedMessages[this.#disconnectedState]);
+  }
 
   #requireDelegate(): MongoDriver {
     if (this.#delegate === null) {
-      throw structuredError('DRIVER.NOT_CONNECTED', notConnectedMessages[this.#disconnectedState]);
+      throw this.#notConnectedError();
     }
     return this.#delegate;
   }
 
   async connect(binding: MongoBinding): Promise<void> {
-    if (this.#delegate !== null) {
+    if (this.#delegate !== null || this.#connecting !== null) {
       throw structuredError('DRIVER.ALREADY_CONNECTED', ALREADY_CONNECTED_MESSAGE, {
         meta: { bindingKind: binding.kind },
       });
     }
-    this.#delegate = await connectedDriver(binding);
-    this.#disconnectedState = 'unbound';
+    const connecting = connectedDriver(binding);
+    this.#connecting = connecting;
+    try {
+      const delegate = await connecting;
+      if (this.#connecting !== connecting) {
+        throw this.#notConnectedError();
+      }
+      this.#delegate = delegate;
+      this.#disconnectedState = 'unbound';
+    } finally {
+      if (this.#connecting === connecting) {
+        this.#connecting = null;
+      }
+    }
   }
 
   async *execute<Row = Record<string, unknown>>(
@@ -72,9 +87,12 @@ class MongoUnboundDriverImpl implements MongoRuntimeDriver {
 
   async close(): Promise<void> {
     const delegate = this.#delegate;
+    const connecting = this.#connecting;
     this.#delegate = null;
+    this.#connecting = null;
     this.#disconnectedState = 'closed';
-    await delegate?.close();
+    const connected = await connecting?.catch(() => null);
+    await Promise.all([delegate?.close(), connected?.close()]);
   }
 }
 

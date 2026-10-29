@@ -80,9 +80,7 @@ export type MongoRuntimeDriverInstance<TTargetId extends string = 'mongo'> = Run
   'mongo',
   TTargetId
 > &
-  MongoDriver & {
-    connect(binding: unknown): Promise<void>;
-  };
+  MongoDriver<unknown>;
 
 export type MongoExecutionStackWithDriver<TTargetId extends string = 'mongo'> =
   MongoExecutionStack<TTargetId> & {

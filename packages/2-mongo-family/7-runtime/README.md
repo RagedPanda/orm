@@ -56,7 +56,7 @@ Custom or third-party codecs (encryption, vendor scalars) are contributed via an
 - **Operation flow**: Row-producing work uses `query(plan)` and the query middleware lifecycle; statistics-producing work uses `execute(plan)` and the execute middleware lifecycle. Each operation allocates its own `CodecCallContext` and threads it through its codec dispatches.
 - **Lowering**: Happens in the adapter (`lower(plan)`), wrapped by the runtime's `lower` override into a `MongoExecutionPlan`.
 - **Middleware lifecycle inheritance**: `MongoRuntime` extends `RuntimeCore<MongoQueryPlan, MongoExecutionPlan, MongoMiddleware>` and runs every `query()` and `execute()` as a statement activity: `activityStarted`, `beforeEncode` (before `resolveParams`), `intercept.onQuery` / `intercept.onExecute`, `onRow`, `activityEnded`, then `activityFinalized` right away, because Mongo has no transactions. Mongo does **not** override `runBeforeCompile` (Mongo middleware has no `beforeCompile` hook today).
-- **Lifecycle management**: Connection lifecycle via `close()`.
+- **Lifecycle management**: `close()` closes the driver. After it, `query()` and `execute()` reject with `DRIVER.NOT_CONNECTED` "Runtime is closed", the error the SQL runtime gives.
 
 ## Architecture
 

@@ -51,7 +51,10 @@ const fakeContract = {
   domain: { namespaces: { [UNBOUND_NAMESPACE_ID]: { models: {} } } },
 } as unknown as AnyMongoContract;
 const url = 'mongodb://localhost:27017/mydb';
-const fakeRuntime = { execute: vi.fn().mockResolvedValue({ affectedCount: 0 }) };
+const fakeRuntime = {
+  execute: vi.fn().mockResolvedValue({ affectedCount: 0 }),
+  close: vi.fn().mockResolvedValue(undefined),
+};
 const closed = { code: 'DRIVER.NOT_CONNECTED', message: 'Mongo client is closed' };
 const alreadyBound = { code: 'DRIVER.ALREADY_CONNECTED' };
 

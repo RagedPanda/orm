@@ -62,3 +62,26 @@ describe('a mongo client given a URL', () => {
     });
   });
 });
+
+describe('a mongo client whose runtime cannot be built', () => {
+  const otherTarget = { name: 'for-other', familyId: 'mongo', targetId: 'other' } as const;
+  const mismatch = { code: 'RUNTIME.MIDDLEWARE_TARGET_MISMATCH' };
+
+  it('reports the middleware error on every try, without opening a connection', async () => {
+    createDriver.mockImplementation(() => ({
+      familyId: 'mongo',
+      targetId: 'mongo',
+      connect,
+      execute: vi.fn(),
+      run: vi.fn(),
+      close: async () => undefined,
+    }));
+    const db = mongo({ contract, url: 'mongodb://localhost:27017/app', middleware: [otherTarget] });
+
+    await expect(db.runtime()).rejects.toMatchObject(mismatch);
+    await expect(db.connect()).rejects.toMatchObject(mismatch);
+    await db.close();
+
+    expect(connect).not.toHaveBeenCalled();
+  });
+});

@@ -1,5 +1,5 @@
 import type { RuntimeDriverDescriptor } from '@internal/framework-components/execution';
-import { DRIVER_INFO } from '../core/driver-info';
+import { mongoDriverDescriptorMeta } from '../core/descriptor-meta';
 import {
   createMongoRuntimeDriver,
   type MongoRuntimeDriver,
@@ -11,12 +11,7 @@ const mongoRuntimeDriverDescriptor: RuntimeDriverDescriptor<
   void,
   MongoRuntimeDriver
 > = {
-  kind: 'driver',
-  familyId: 'mongo',
-  targetId: 'mongo',
-  id: 'mongo',
-  version: DRIVER_INFO.version,
-  capabilities: {},
+  ...mongoDriverDescriptorMeta,
   create: createMongoRuntimeDriver,
 };
 

@@ -82,6 +82,8 @@ class StubMongoDriver implements MongoDriver {
 
   constructor(private readonly log?: EventLog) {}
 
+  async connect(): Promise<void> {}
+
   failUpdateManyWith(error: unknown): void {
     this.failure = error;
   }

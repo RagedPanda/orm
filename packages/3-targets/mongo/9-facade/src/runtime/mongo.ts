@@ -104,20 +104,31 @@ export default function mongo<
   // build resets `runtimePromise` so a retry is possible (see test).
   let runtimePromise: Promise<MongoRuntime> | undefined;
   let closed = false;
-  let driver: MongoRuntimeDriverInstance | undefined;
+  let runtimeInstance:
+    | { readonly runtime: MongoRuntime; readonly driver: MongoRuntimeDriverInstance }
+    | undefined;
 
   const closedError = () => mongoError('DRIVER.NOT_CONNECTED', 'Mongo client is closed');
 
-  const buildRuntime = async (resolvedBinding: MongoBinding): Promise<MongoRuntime> => {
-    driver ??= stack.driver.create();
-    await driver.connect(resolvedBinding);
-    return createMongoRuntime({
+  // The runtime is created before the driver connects, as in postgres(), so a runtime that cannot be built opens no connection. The runtime owns the driver and closes it.
+  const createRuntime = () => {
+    if (runtimeInstance !== undefined) return runtimeInstance;
+    const driver = stack.driver.create();
+    const runtime = createMongoRuntime({
       context,
       adapter: stack.adapter.create(stack),
       driver,
       ...ifDefined('mode', options.mode),
       ...ifDefined('middleware', options.middleware),
     });
+    runtimeInstance = { runtime, driver };
+    return runtimeInstance;
+  };
+
+  const buildRuntime = async (resolvedBinding: MongoBinding): Promise<MongoRuntime> => {
+    const { runtime, driver } = createRuntime();
+    await driver.connect(resolvedBinding);
+    return runtime;
   };
 
   const getRuntime = (): Promise<MongoRuntime> => {
@@ -206,15 +217,9 @@ export default function mongo<
     async close(): Promise<void> {
       if (closed) return;
       closed = true;
-      if (runtimePromise === undefined) return;
-      // A failed build leaves nothing to close: the driver released what it had acquired.
-      try {
-        await runtimePromise;
-      } catch {
-        return;
-      }
-      // The driver closes a client it created from a URL and leaves a caller's mongoClient open.
-      await driver?.close();
+      await runtimePromise?.catch(() => undefined);
+      // The runtime closes its driver, which closes a client it created from a URL and leaves a caller's mongoClient open.
+      await runtimeInstance?.runtime.close();
     },
 
     [Symbol.asyncDispose](): Promise<void> {

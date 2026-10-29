@@ -270,14 +270,43 @@ describe('mongo() facade', () => {
     });
   });
 
-  it('close() closes the driver it created from the stack', async () => {
+  it('close() closes the runtime, which owns the driver it created from the stack', async () => {
     const db = mongo({ contract: fakeContract, url: 'mongodb://localhost:27017/mydb' });
 
     await db.runtime();
     await db.close();
 
-    expect(mocks.driverClose).toHaveBeenCalledTimes(1);
-    expect(fakeRuntime.close).not.toHaveBeenCalled();
+    expect(fakeRuntime.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates the runtime before it connects the driver', async () => {
+    const order: string[] = [];
+    mocks.createMongoRuntime.mockImplementation(() => {
+      order.push('runtime');
+      return fakeRuntime;
+    });
+    mocks.driverConnect.mockImplementation(async () => {
+      order.push('connect');
+    });
+    const db = mongo({ contract: fakeContract, url: 'mongodb://localhost:27017/mydb' });
+
+    await db.runtime();
+
+    expect(order).toEqual(['runtime', 'connect']);
+  });
+
+  it('reports a runtime construction failure on every try and connects nothing', async () => {
+    const failure = new Error('incompatible middleware');
+    mocks.createMongoRuntime.mockImplementation(() => {
+      throw failure;
+    });
+    const db = mongo({ contract: fakeContract, url: 'mongodb://localhost:27017/mydb' });
+
+    await expect(db.runtime()).rejects.toBe(failure);
+    await expect(db.runtime()).rejects.toBe(failure);
+    await db.close();
+
+    expect(mocks.driverConnect).not.toHaveBeenCalled();
   });
 
   it('close() leaves a caller-supplied mongoClient to the driver, which keeps it open', async () => {
@@ -291,7 +320,7 @@ describe('mongo() facade', () => {
     await db.runtime();
     await db.close();
 
-    expect(mocks.driverClose).toHaveBeenCalledTimes(1);
+    expect(fakeRuntime.close).toHaveBeenCalledTimes(1);
     expect(fakeClient.close).not.toHaveBeenCalled();
     expect(fakeClient.db).not.toHaveBeenCalled();
   });
@@ -312,8 +341,7 @@ describe('mongo() facade', () => {
     await db.close();
     await db.close();
 
-    expect(mocks.driverClose).toHaveBeenCalledTimes(1);
-    expect(fakeRuntime.close).not.toHaveBeenCalled();
+    expect(fakeRuntime.close).toHaveBeenCalledTimes(1);
   });
 
   it('clears the cached runtime promise after a failed first build, so a later call can retry', async () => {
@@ -325,12 +353,22 @@ describe('mongo() facade', () => {
     const db = mongo({ contract: fakeContract, url: 'mongodb://localhost:27017/mydb' });
 
     await expect(db.runtime()).rejects.toThrow('connection refused');
-    expect(mocks.createMongoRuntime).not.toHaveBeenCalled();
 
     const runtime = await db.runtime();
     expect(runtime).toBe(fakeRuntime);
     expect(mocks.driverConnect).toHaveBeenCalledTimes(2);
+    expect(mocks.createDriver).toHaveBeenCalledTimes(1);
     expect(mocks.createMongoRuntime).toHaveBeenCalledTimes(1);
+  });
+
+  it('close() after a failed connect closes the runtime it created', async () => {
+    mocks.driverConnect.mockReset().mockRejectedValueOnce(new Error('connection refused'));
+    const db = mongo({ contract: fakeContract, url: 'mongodb://localhost:27017/mydb' });
+
+    await expect(db.runtime()).rejects.toThrow('connection refused');
+    await db.close();
+
+    expect(fakeRuntime.close).toHaveBeenCalledTimes(1);
   });
 
   it('close() before any build is a no-op and locks the client', async () => {
@@ -358,7 +396,7 @@ describe('mongo() facade', () => {
     },
   );
 
-  it('close() while a build is in flight still locks the client and skips driver-close on a failed build', async () => {
+  it('close() while a build is in flight locks the client and still closes the runtime after the build fails', async () => {
     mocks.driverConnect.mockReset().mockRejectedValueOnce(new Error('connection refused'));
 
     const db = mongo({ contract: fakeContract, url: 'mongodb://localhost:27017/mydb' });
@@ -367,8 +405,7 @@ describe('mongo() facade', () => {
     await db.close();
     await inflight;
 
-    expect(mocks.driverClose).not.toHaveBeenCalled();
-    expect(fakeRuntime.close).not.toHaveBeenCalled();
+    expect(fakeRuntime.close).toHaveBeenCalledTimes(1);
     await expect(db.runtime()).rejects.toThrow('Mongo client is closed');
   });
 
@@ -379,8 +416,7 @@ describe('mongo() facade', () => {
     }
 
     await run();
-    expect(mocks.driverClose).toHaveBeenCalledTimes(1);
-    expect(fakeRuntime.close).not.toHaveBeenCalled();
+    expect(fakeRuntime.close).toHaveBeenCalledTimes(1);
   });
 
   describe('db.runtime().query', () => {

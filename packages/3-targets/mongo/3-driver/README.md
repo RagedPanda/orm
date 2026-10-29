@@ -11,4 +11,3 @@ MongoDB driver for Prisma 8. Executes wire-protocol documents against a MongoDB 
 
 - **`@internal/driver-mongo/runtime`**: the runtime driver descriptor (default export). `create()` returns a driver that is not connected; `connect(binding)` connects it to a `MongoBinding`, either `{ kind: 'url', url, dbName }` or `{ kind: 'mongoClient', client, dbName }`. `close()` closes a `MongoClient` the driver created from a URL and leaves a caller's client open. `mongo()` from `@internal/mongo/runtime` creates its driver from this descriptor through the execution stack.
 - **`@internal/driver-mongo/control`**: the control driver descriptor the CLI uses.
-- **`@internal/driver-mongo`**: `MongoDriverImpl` and `createMongoDriver(uri, dbName)`, a connected driver for tests and low-level wiring.

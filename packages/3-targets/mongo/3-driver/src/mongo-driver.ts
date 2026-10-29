@@ -67,6 +67,8 @@ export class MongoDriverImpl implements MongoDriver {
     return new MongoDriverImpl(db, undefined);
   }
 
+  async connect(): Promise<void> {}
+
   execute<Row = Record<string, unknown>>(wireCommand: AnyMongoDmlWireCommand): AsyncIterable<Row> {
     switch (wireCommand.kind) {
       case 'insertOne':
@@ -310,8 +312,4 @@ export class MongoDriverImpl implements MongoDriver {
       ...(changeStreamPreAndPostImages !== undefined ? { changeStreamPreAndPostImages } : {}),
     });
   }
-}
-
-export async function createMongoDriver(uri: string, dbName: string): Promise<MongoDriver> {
-  return MongoDriverImpl.fromConnection(uri, dbName);
 }

@@ -5,7 +5,7 @@ import {
 } from '@internal/mongo-wire';
 import { MongoClient } from 'mongodb';
 import { MongoMemoryReplSet } from 'mongodb-memory-server';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import mongoRuntimeDriver from '../src/exports/runtime';
 
 let replSet: MongoMemoryReplSet;
@@ -23,6 +23,17 @@ beforeAll(async () => {
 afterAll(async () => {
   await replSet?.stop();
 });
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+function spyOnClients() {
+  return {
+    connect: vi.spyOn(MongoClient.prototype, 'connect'),
+    close: vi.spyOn(MongoClient.prototype, 'close'),
+  };
+}
 
 async function collect<T>(iterable: AsyncIterable<T>): Promise<T[]> {
   const items: T[] = [];
@@ -77,10 +88,14 @@ describe('a Mongo runtime driver connected to a URL', () => {
   });
 
   it('closes the client it created on close()', async () => {
+    const clients = spyOnClients();
     const driver = mongoRuntimeDriver.create();
     await driver.connect({ kind: 'url', url: connectionUri, dbName });
+    expect(clients.close).not.toHaveBeenCalled();
+
     await driver.close();
 
+    expect(clients.close).toHaveBeenCalledTimes(1);
     await expect(collect(driver.execute(countAll('by_url')))).rejects.toMatchObject({
       code: 'DRIVER.NOT_CONNECTED',
       message: 'Mongo driver is closed. Call connect(binding) to reconnect.',
@@ -104,9 +119,11 @@ describe('a Mongo runtime driver connected to a URL', () => {
   });
 
   it('stays unconnected after a failed connect, so a later connect can succeed', async () => {
+    const clients = spyOnClients();
     const driver = mongoRuntimeDriver.create();
 
     await expect(driver.connect({ kind: 'url', url: unreachableUrl, dbName })).rejects.toThrow();
+    expect(clients.close).toHaveBeenCalledTimes(1);
     await expect(collect(driver.execute(countAll('by_url')))).rejects.toMatchObject({
       code: 'DRIVER.NOT_CONNECTED',
     });
@@ -120,16 +137,67 @@ describe('a Mongo runtime driver connected to a URL', () => {
   });
 });
 
+describe('a Mongo runtime driver that is connecting', () => {
+  it('refuses a second connect() while the first is pending, and opens one client', async () => {
+    const clients = spyOnClients();
+    const driver = mongoRuntimeDriver.create();
+    const first = driver.connect({ kind: 'url', url: connectionUri, dbName });
+
+    await expect(driver.connect({ kind: 'url', url: connectionUri, dbName })).rejects.toMatchObject(
+      { code: 'DRIVER.ALREADY_CONNECTED' },
+    );
+    await first;
+    try {
+      expect(clients.connect).toHaveBeenCalledTimes(1);
+    } finally {
+      await driver.close();
+    }
+  });
+
+  it('leaves nothing open when close() runs during the connect', async () => {
+    const clients = spyOnClients();
+    const driver = mongoRuntimeDriver.create();
+    const connecting = driver.connect({ kind: 'url', url: connectionUri, dbName });
+
+    await driver.close();
+
+    await expect(connecting).rejects.toMatchObject({
+      code: 'DRIVER.NOT_CONNECTED',
+      message: 'Mongo driver is closed. Call connect(binding) to reconnect.',
+    });
+    expect(clients.close).toHaveBeenCalledTimes(1);
+    await expect(collect(driver.execute(countAll('by_url')))).rejects.toMatchObject({
+      code: 'DRIVER.NOT_CONNECTED',
+      message: 'Mongo driver is closed. Call connect(binding) to reconnect.',
+    });
+  });
+
+  it('closes cleanly when close() runs during a connect that fails', async () => {
+    const driver = mongoRuntimeDriver.create();
+    const connecting = driver.connect({ kind: 'url', url: unreachableUrl, dbName });
+
+    await driver.close();
+
+    await expect(connecting).rejects.toThrow();
+    await expect(collect(driver.execute(countAll('by_url')))).rejects.toMatchObject({
+      code: 'DRIVER.NOT_CONNECTED',
+      message: 'Mongo driver is closed. Call connect(binding) to reconnect.',
+    });
+  });
+});
+
 describe('a Mongo runtime driver connected to a caller`s MongoClient', () => {
   it('runs commands and leaves the client open on close()', async () => {
     const client = new MongoClient(connectionUri);
     await client.connect();
     try {
+      const clients = spyOnClients();
       const driver = mongoRuntimeDriver.create();
       await driver.connect({ kind: 'mongoClient', client, dbName });
       await collect(driver.execute(new InsertOneWireCommand('by_client', { name: 'Grace' })));
       await driver.close();
 
+      expect(clients.close).not.toHaveBeenCalled();
       expect(await client.db(dbName).collection('by_client').countDocuments()).toBe(1);
     } finally {
       await client.close();
