@@ -131,7 +131,14 @@ class PgQueryable<ClientT extends StdClient | TransactionClient> implements SqlQ
   }
 }
 
+const TRANSACTION_END = /^\s*(COMMIT|ROLLBACK)\s*;?\s*$/i
+
 class PgTransaction extends PgQueryable<TransactionClient> implements Transaction {
+  // Set when a `COMMIT` or `ROLLBACK` sent through `executeRaw` did not resolve, e.g. after
+  // `query_timeout` rejected it. The connection may still be inside the transaction, so it must
+  // not go back to the pool.
+  #endFailed = false
+
   constructor(
     client: pg.PoolClient,
     readonly options: TransactionOptions,
@@ -141,18 +148,39 @@ class PgTransaction extends PgQueryable<TransactionClient> implements Transactio
     super(client, pgOptions)
   }
 
+  override async executeRaw(query: SqlQuery): Promise<number> {
+    if (!TRANSACTION_END.test(query.sql)) {
+      return super.executeRaw(query)
+    }
+
+    this.#endFailed = true
+    const rowCount = await super.executeRaw(query)
+    this.#endFailed = false
+    return rowCount
+  }
+
   async commit(): Promise<void> {
     debug(`[js::commit]`)
 
     this.cleanup?.()
-    this.client.release()
+    this.release()
   }
 
   async rollback(): Promise<void> {
     debug(`[js::rollback]`)
 
     this.cleanup?.()
-    this.client.release()
+    this.release()
+  }
+
+  private release(): void {
+    if (this.#endFailed) {
+      // `pg-pool` destroys a client released with an error, and the server rolls back the open
+      // transaction when the socket closes.
+      this.client.release(new Error('the transaction did not end cleanly'))
+    } else {
+      this.client.release()
+    }
   }
 
   async createSavepoint(name: string): Promise<void> {
