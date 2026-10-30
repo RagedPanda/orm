@@ -23,8 +23,8 @@ Counts the projects marked Must in each stream. A project counts as done only wh
 | Editor and tools | 3 of 6 (50%) | `█████░░░░░` | 1 | 2 |
 | Query features | 8 of 11 (73%) | `███████░░░` | 1 | 2 |
 | Docs and the new user's first hour | 1 of 5 (20%) | `██░░░░░░░░` | 3 | 1 |
-| Work found along the way | 1 of 2 (50%) | `█████░░░░░` | 0 | 1 |
-| **All streams** | **25 of 39 (64%)** | `██████░░░░` | **7** | **7** |
+| Work found along the way | 1 of 3 (33%) | `███░░░░░░░` | 0 | 2 |
+| **All streams** | **25 of 40 (63%)** | `██████░░░░` | **7** | **8** |
 
 ## Stream 1: Foundations and breaking changes
 
@@ -117,7 +117,7 @@ Test: the getting-started eval passes, in few steps and with no workarounds.
 
 ## Stream 6: Work found along the way
 
-**GA readiness:** 1 of 2 Must projects done (50%). 0 in progress, 1 not started.
+**GA readiness:** 1 of 3 Must projects done (33%). 0 in progress, 2 not started.
 
 Work found after the plan was made goes here, so the first five streams keep the scope they started with (Will, 2026-10-21).
 
@@ -127,11 +127,13 @@ Work found after the plan was made goes here, so the first five streams keep the
 | 1b | ⏳ | `contract print` writes a relation into another contract space (TML-3326), and an extension pack says how its entity kind is printed (TML-3323, needs an ADR first) | Not decided | Will | Backlog. Moved from stream 2 row 1 on 2026-10-29 | |
 | 2 | ⏳ | Shrink the generated contract files, so a PR's line count shows the change and not the regenerated `contract.d.ts` and `contract.json` | Must | Will | Not started, no ticket. Migration snapshots in every user's `migrations/` folder hold both files. Possibly minify them or strip whitespace (Will, 2026-10-21) |  |
 | 3 | ✅ 6/6 | Date and time usability: `DateTime`, `Date`, `Time` and `Duration` convenience types over the explicit database types; string codecs return ISO strings; a Prisma 7 `@default(now())` keeps filling the value on create | Must | Will | Started 2026-10-21. The design (ADR 279) and slices TML-3418, TML-3711, TML-3713 and TML-3719 merged 2026-10-23. TML-3710 was cancelled. The convenience types (TML-3712) merged 2026-10-28. Done 2026-10-29; the close-out merged that day |  |
+| 4 | ⏳ | Maturity per package: the framework and each database package have their own maturity level, and a package's public API is its public exports. Document the policy publicly and update the existing definitions | Must | Will | Decided 2026-10-30. Not started. Pages to update: `docs/oss/versioning.md` (its supported-versions table and release candidate terms speak for all of Prisma 8), and in prisma/web `orm/release-status.mdx` and `orm/supported-databases.mdx` (its labels: release candidate, early access, experimental, coming soon) |  |
 
 ## Databases
 
 | Database | At GA |
 | --- | --- |
+| Framework (ORM core) | Release candidate today. Its own maturity level since 2026-10-30 |
 | PostgreSQL | Ready |
 | SQLite, MongoDB, MySQL/MariaDB | Can finish after GA. Labelled release candidate or early access until ready. They start once stream 1 has stopped changing what targets build on. |
 

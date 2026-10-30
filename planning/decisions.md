@@ -88,6 +88,11 @@ Stopping point for the open upgrade issues: every urgent and high issue is close
 
 Will, 2026-09-30: the emulator controls (start, stop, list, reset) are now urgent and start immediately. They were already required for GA; what changed is the order. They move to the top of the editor and tools stream. The VS Code extension work that depends on them (items 2 and 3 of that stream) waits on them. Background from 2026-09-28: several emulators of each type can run, so status is a list; the eval found that stopping `prisma dev` leaves the emulator processes running and no stop or cleanup command exists.
 
+## Changes of 2026-10-30
+
+- Maturity is set per package, not for Prisma 8 as a whole (Will). The ORM core, the framework, has its own maturity level: release candidate today. Each database target package has its own level: PostgreSQL is release candidate, MongoDB is early access, and so on. A package's public API is its public exports. Apps and extension authors use the same exports, so one rule covers both. Reason: each database can launch on its own date, and the community can be asked to help build the remaining targets. That invitation need not be documented now, but the public pages must set the expectation.
+- The policy is documented publicly, and the existing definitions are updated to match, as part of this plan (Will). Stream 6, row 4.
+
 ## Changes of 2026-10-23
 
 - Date and time usability is a GA project (Will). It started on 2026-10-21, so it is Must. Stream 6, row 3.
@@ -171,6 +176,8 @@ From another conversation, 2026-09-28:
 All four at GA: PostgreSQL, SQLite, MySQL/MariaDB, MongoDB. No MySQL target exists in the repo today.
 
 PostgreSQL must be ready at GA. The other databases can finish after the GA launch, as long as they are visibly on the way. Until each is ready it is labelled release candidate or early access.
+
+Since 2026-10-30 that label belongs to each database's package, and the framework has its own (see "Changes of 2026-10-30").
 
 ## Required before GA, in order
 
