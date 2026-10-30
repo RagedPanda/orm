@@ -19,6 +19,10 @@ describe.each(['app', 'extension'] as const)(
       ['an import of createMongoDriver', `import { createMongoDriver } from '${facadeDriver}';`],
       ['a call of createMongoDriver', 'const driver = await createMongoDriver(url, dbName);'],
       ['a call of MongoDriverImpl.fromDb', 'const driver = MongoDriverImpl.fromDb(db);'],
+      [
+        'a CommonJS require of createMongoDriver',
+        `const { createMongoDriver } = require('${facadeDriver}');`,
+      ],
     ])('finds %s', (_name, content) => {
       expect(detects(audience, id, content)).toBe(true);
     });
@@ -63,6 +67,12 @@ describe('the extension MongoDriver and MongoQueryable detection', () => {
     ['a parameter typed with it', 'async executeDdl(driver: MongoDriver, command: Command) {'],
     ['an optional field typed with it', '  readonly driver?: MongoDriver;'],
     ['a return type', 'function createMockDriver(): MongoDriver {'],
+    ['an interface that extends it', 'interface CustomDriver extends MongoDriver {'],
+    [
+      'an interface that extends it with a binding',
+      'export interface CustomDriver extends Other, MongoDriver<Binding> {',
+    ],
+    ['a type alias that names it', 'type CustomDriver = MongoDriver & { readonly name: string };'],
   ])('finds %s', (_name, content) => {
     expect(detects('extension', id, content)).toBe(true);
   });
@@ -72,6 +82,12 @@ describe('the extension MongoDriver and MongoQueryable detection', () => {
     ['a cast to it', '} as unknown as MongoDriver;'],
     ['a longer name', 'class Stub implements MongoDriverFactory {'],
     ['a type argument', 'const drivers = new Map<string, MongoDriver>();'],
+    ['an interface that extends MongoQueryable', 'interface CustomDriver extends MongoQueryable {'],
+    [
+      'an interface that extends a longer name',
+      'interface CustomDriver extends MongoDriverFactory {',
+    ],
+    ['a type alias of MongoQueryable', 'type CustomDriver = MongoQueryable;'],
   ])('skips %s', (_name, content) => {
     expect(detects('extension', id, content)).toBe(false);
   });

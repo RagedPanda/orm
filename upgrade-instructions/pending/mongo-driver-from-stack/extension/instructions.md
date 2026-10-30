@@ -2,21 +2,23 @@
 changes:
   - id: mongo-driver-from-runtime-descriptor
     summary: |
-      `@internal/driver-mongo` has no root export any more, so `createMongoDriver` and `MongoDriverImpl` are gone, as `@internal/driver-postgres` has none. Create a runtime driver from the descriptor that `@internal/driver-mongo/runtime` exports by default, then connect it. `@prisma/orm-mongo/driver` and `@prisma/orm-target-mongo/driver` now export what `driver/control` and `driver/runtime` export. The detection matches files that name `createMongoDriver` or `MongoDriverImpl`, or import the root `@internal/driver-mongo`.
+      `@internal/driver-mongo` has no root export any more, so `createMongoDriver` and `MongoDriverImpl` are gone, as `@internal/driver-postgres` has none. Create a runtime driver from the descriptor that `@prisma/orm-target-mongo/driver/runtime` exports by default, then connect it. `@prisma/orm-mongo/driver` and `@prisma/orm-target-mongo/driver` now export what `driver/control` and `driver/runtime` export. The detection matches files that name `createMongoDriver` or `MongoDriverImpl`, or import the root `@internal/driver-mongo`.
     detection:
-      glob: "**/*.{ts,mts,cts,tsx}"
+      glob: "**/*.{ts,mts,cts,tsx,js,mjs,cjs,jsx}"
       matches:
         - '(?<![\w$])(?:createMongoDriver|MongoDriverImpl)(?![\w$])'
         - '[''"]@internal/driver-mongo[''"]'
   - id: mongo-driver-connect
     summary: |
-      `@internal/mongo-lowering` adds `MongoQueryable`, with `execute` and `run`, as `SqlQueryable` is for SQL. `MongoDriver<TBinding = void>` extends it and adds `connect(binding)` and `close()`, as `SqlDriver<TBinding>` does. `MongoControlDriverInstance` extends `MongoQueryable`, not `MongoDriver`, so a control driver has no `connect`. `executeDdl`, `MongoRunnerDependencies.driver` and the migration runner now take `MongoQueryable`; `createMongoRuntime` takes `MongoDriver<unknown>`. Type code that only sends commands, or that receives a control driver, as `MongoQueryable`. A runtime driver you implement as `MongoDriver` adds `connect`. The detection matches classes that implement `MongoDriver` and values, parameters and return types annotated or checked as `MongoDriver`.
+      `@internal/mongo-lowering` adds `MongoQueryable`, with `execute` and `run`, as `SqlQueryable` is for SQL. `MongoDriver<TBinding = void>` extends it and adds `connect(binding)` and `close()`, as `SqlDriver<TBinding>` does. `MongoControlDriverInstance` extends `MongoQueryable`, not `MongoDriver`, so a control driver has no `connect`. `executeDdl`, `MongoRunnerDependencies.driver` and the migration runner now take `MongoQueryable`; `createMongoRuntime` takes `MongoDriver<unknown>`. Type code that only sends commands, or that receives a control driver, as `MongoQueryable`. A runtime driver you implement as `MongoDriver` adds `connect`. The detection matches classes that implement `MongoDriver`, interfaces and classes that extend it, type aliases that name it, and values, parameters and return types annotated or checked as `MongoDriver`.
     detection:
       glob: "**/*.{ts,mts,cts,tsx}"
       matches:
         - 'implements\s[^{]*(?<![\w$])MongoDriver(?![\w$])'
         - '[\w$)]\??\s*:\s*MongoDriver(?![\w$])'
         - 'satisfies\s+MongoDriver(?![\w$])'
+        - '(?:interface|class)\s[^{]*extends\s[^{]*(?<![\w$])MongoDriver(?![\w$])'
+        - 'type\s+[\w$]+(?:<[^>]*>)?\s*=[^;]*(?<![\w$])MongoDriver(?![\w$])'
 ---
 
 # Create a Mongo runtime driver from its descriptor
@@ -25,13 +27,13 @@ Put the descriptor on the execution stack, create the driver from the stack, and
 
 ```ts
 // Before
-import { createMongoDriver } from '@internal/driver-mongo';
+import { createMongoDriver } from '@prisma/orm-target-mongo/driver';
 
 const stack = createMongoExecutionStack({ target: mongoRuntimeTarget, adapter: mongoRuntimeAdapter });
 const driver = await createMongoDriver(url, dbName);
 
 // After
-import mongoRuntimeDriver from '@internal/driver-mongo/runtime';
+import mongoRuntimeDriver from '@prisma/orm-target-mongo/driver/runtime';
 
 const stack = createMongoExecutionStack({
   target: mongoRuntimeTarget,
@@ -42,7 +44,7 @@ const driver = stack.driver.create();
 await driver.connect({ kind: 'url', url, dbName });
 ```
 
-Replace `MongoDriverImpl.fromDb(client.db(dbName))` with `driver.connect({ kind: 'mongoClient', client, dbName })` on a driver created the same way. Code that only sends DDL through a control adapter can use the control driver instead: `await mongoControlDriver.create(url)`, with `mongoControlDriver` the default export of `@internal/driver-mongo/control`.
+Replace `MongoDriverImpl.fromDb(client.db(dbName))` with `driver.connect({ kind: 'mongoClient', client, dbName })` on a driver created the same way. Code that only sends DDL through a control adapter can use the control driver instead: `await mongoControlDriver.create(url)`, with `mongoControlDriver` the default export of `@prisma/orm-target-mongo/driver/control`. The control driver uses the database the URL names, so put `dbName` in the URL's path, for example `mongodb://localhost:27017/app`.
 
 `createMongoRuntime(...)` closes the driver when the runtime closes, so keep calling `runtime.close()` and drop any separate `driver.close()`.
 
@@ -53,12 +55,12 @@ Code that only sends commands takes `MongoQueryable`, so it accepts a control dr
 ```ts
 // Before
 async function seed(driver: MongoDriver): Promise<void> {
-  await driver.run(new CreateCollectionWireCommand('users'));
+  await driver.run(new CreateCollectionWireCommand('users', {}));
 }
 
 // After
 async function seed(driver: MongoQueryable): Promise<void> {
-  await driver.run(new CreateCollectionWireCommand('users'));
+  await driver.run(new CreateCollectionWireCommand('users', {}));
 }
 ```
 
