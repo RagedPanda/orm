@@ -19,12 +19,12 @@ Counts the projects marked Must in each stream. A project counts as done only wh
 | Stream | Done | Bar | In progress | Not started |
 | --- | --- | --- | --- | --- |
 | Foundations and breaking changes | 6 of 8 (75%) | `████████░░` | 2 | 0 |
-| Upgrade path from Prisma 7 | 5 of 7 (71%) | `███████░░░` | 0 | 2 |
+| Upgrade path from Prisma 7 | 6 of 7 (86%) | `█████████░` | 0 | 1 |
 | Editor and tools | 3 of 6 (50%) | `█████░░░░░` | 1 | 2 |
 | Query features | 8 of 11 (73%) | `███████░░░` | 1 | 2 |
 | Docs and the new user's first hour | 1 of 5 (20%) | `██░░░░░░░░` | 3 | 1 |
 | Work found along the way | 1 of 2 (50%) | `█████░░░░░` | 0 | 1 |
-| **All streams** | **24 of 39 (62%)** | `██████░░░░` | **7** | **8** |
+| **All streams** | **25 of 39 (64%)** | `██████░░░░` | **7** | **7** |
 
 ## Stream 1: Foundations and breaking changes
 
@@ -45,7 +45,7 @@ GA is the last chance to make breaking changes, so this stream decides the date.
 
 ## Stream 2: Upgrade path from Prisma 7
 
-**GA readiness:** 5 of 7 Must projects done (71%). 0 in progress, 2 not started.
+**GA readiness:** 6 of 7 Must projects done (86%). 0 in progress, 1 not started.
 
 Test: an existing Prisma 7 database can be signed by Prisma 8.
 
@@ -57,7 +57,7 @@ Test: an existing Prisma 7 database can be signed by Prisma 8.
 | 4 | ⏳ | Upgrade guide rewrite | Must | Will | Ticket in backlog. One known error in the guide |  |
 | 5 | ✅ 6/6 | Codecs for `citext`, `bit`, `varbit`, `xml`, `oid`, `money` | Must | Will | Done 2026-10-30. `bit`, `varbit`, `xml`, `oid` and `money` merged 2026-10-29. `citext`, as a new extension pack, merged 2026-10-30 |  |
 | 6 | ✅ 3/3 | Columns whose type has no codec | Must | Will | Done 2026-10-21 (Will). ADR 273: such a column is a raw column, `Raw("...")` in a Prisma 8 schema, and a Prisma 7 `Unsupported(...)` field is read as one. The close-out merged 2026-10-21 |  |
-| 7 | ⏳ | Adopt a Prisma 7 database without changing it: the enum membership check | Must | Will | Not designed |  |
+| 7 | ✅ | Adopt a Prisma 7 database without changing it: the enum membership check | Must | Will | Done. The Prisma 7 reader reads enums as native Postgres enums, which get no derived CHECK constraint (ADR 157 amendments, ADR 286). So `db sign` and `db verify` accept the database Prisma 7 built, enums included. The CLI journeys `prisma7-source` and `native-enum-adoption` cover it |  |
 | 8 | ⏳ | Medium and low upgrade issues | Later | Will | Backlog | |
 | 9 | — | `money` codec | Later | Will | Moved into row 5 on 2026-10-27 | |
 | 10 | ⏳ | Views | Later | Will | Backlog | |
