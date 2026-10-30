@@ -134,9 +134,9 @@ class PgQueryable<ClientT extends StdClient | TransactionClient> implements SqlQ
 const TRANSACTION_END = /^\s*(COMMIT|ROLLBACK)\s*;?\s*$/i
 
 class PgTransaction extends PgQueryable<TransactionClient> implements Transaction {
-  // Set when a `COMMIT` or `ROLLBACK` sent through `executeRaw` did not resolve, e.g. after
-  // `query_timeout` rejected it. The connection may still be inside the transaction, so it must
-  // not go back to the pool.
+  // Set when a `COMMIT` or `ROLLBACK` sent through `queryRaw` or `executeRaw` did not resolve,
+  // e.g. after `query_timeout` rejected it. The connection may still be inside the transaction, so
+  // it must not go back to the pool.
   #endFailed = false
 
   constructor(
@@ -148,15 +148,23 @@ class PgTransaction extends PgQueryable<TransactionClient> implements Transactio
     super(client, pgOptions)
   }
 
-  override async executeRaw(query: SqlQuery): Promise<number> {
+  override queryRaw(query: SqlQuery): Promise<SqlResultSet> {
+    return this.trackEnd(query, () => super.queryRaw(query))
+  }
+
+  override executeRaw(query: SqlQuery): Promise<number> {
+    return this.trackEnd(query, () => super.executeRaw(query))
+  }
+
+  private async trackEnd<T>(query: SqlQuery, run: () => Promise<T>): Promise<T> {
     if (!TRANSACTION_END.test(query.sql)) {
-      return super.executeRaw(query)
+      return run()
     }
 
     this.#endFailed = true
-    const rowCount = await super.executeRaw(query)
+    const result = await run()
     this.#endFailed = false
-    return rowCount
+    return result
   }
 
   async commit(): Promise<void> {

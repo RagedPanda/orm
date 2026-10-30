@@ -165,6 +165,16 @@ describe('PrismaPgAdapterFactory', () => {
       await adapter.dispose()
     })
 
+    it('destroys the connection when a ROLLBACK sent through queryRaw did not resolve', async () => {
+      const { adapter, transaction, mockConnection } = await startTransaction(timeoutOn('ROLLBACK'))
+
+      await expect(transaction.queryRaw(sql('ROLLBACK'))).rejects.toThrow()
+      await transaction.rollback()
+
+      expect(mockConnection.release).toHaveBeenCalledWith(expect.any(Error))
+      await adapter.dispose()
+    })
+
     it('keeps the connection when only a ROLLBACK TO SAVEPOINT failed', async () => {
       const { adapter, transaction, mockConnection } = await startTransaction(timeoutOn('ROLLBACK TO SAVEPOINT s1'))
 
