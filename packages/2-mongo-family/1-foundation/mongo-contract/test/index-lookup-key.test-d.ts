@@ -1,8 +1,8 @@
 import { describe, expectTypeOf, test } from 'vitest';
-import { listsEveryOption, MONGO_INDEX_OPTION_KEYS } from '../src/index-equivalence';
-import type { MongoSchemaIndexOptions } from '../src/schema-index';
+import { listsEveryOption, MONGO_INDEX_OPTION_KEYS } from '../src/index-lookup-key';
+import type { MongoIndexInput } from '../src/ir/mongo-index';
 
-type IndexOptionName = Exclude<keyof MongoSchemaIndexOptions, 'keys'>;
+type IndexOptionName = Exclude<keyof MongoIndexInput, 'keys'>;
 
 describe('listsEveryOption', () => {
   test('accepts the list of every index option', () => {
