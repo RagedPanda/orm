@@ -131,7 +131,9 @@ class PgQueryable<ClientT extends StdClient | TransactionClient> implements SqlQ
   }
 }
 
-const TRANSACTION_END = /^\s*(COMMIT|ROLLBACK)\s*;?\s*$/i
+// `COMMIT`, `ROLLBACK` and their equivalent forms (`END`, `ABORT`, `... WORK`, `... TRANSACTION`).
+// `ROLLBACK TO SAVEPOINT` and `... AND CHAIN` leave the transaction open, so they don't match.
+const TRANSACTION_END = /^\s*(COMMIT|ROLLBACK|END|ABORT)(\s+(WORK|TRANSACTION))?(\s+AND\s+NO\s+CHAIN)?\s*;?\s*$/i
 
 class PgTransaction extends PgQueryable<TransactionClient> implements Transaction {
   // Set when a `COMMIT` or `ROLLBACK` sent through `queryRaw` or `executeRaw` did not resolve,
