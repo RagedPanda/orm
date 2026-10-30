@@ -215,6 +215,8 @@ Tracked so far: TML-3340 (docs and the shipped skill name `prisma-composer`). No
 - Performance work.
 - The BetterAuth flow.
 - Prisma 8 syntax for columns and tables no model maps (TML-3469), stream 2 row 11. Until then, `contract print` refuses a Prisma 7 schema that uses `@ignore`, and such a project keeps its Prisma 7 schema as the contract source (Will, 2026-10-13).
+- Stream 2 row 1 covers issues in the Prisma 7 contract source only. The `contract print` issues TML-3323 and TML-3326 do not belong there; they sit in stream 6, not placed (Will, 2026-10-29).
+- TML-3772, a pack's extension installed outside `public` (as Supabase installs `vector`), is not a GA concern (Will, 2026-10-29: "I don't care about this problem").
 
 ## Lower priority, handled by Will in parallel
 

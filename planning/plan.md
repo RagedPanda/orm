@@ -10,7 +10,7 @@ This page lists the projects in priority order, by stream. Work the streams in p
 
 **Progress column:** one symbol, then done/total where the row has countable units. ✅ done · 🟡 code done, waiting on review or docs · 🔄 in progress · ⏳ not started · ❓ needs a decision from Will. The units are the slices, pull requests, tickets or items the Status column names; a row with no units yet has no count.
 
-States were last checked against GitHub and Linear on 2026-10-29.
+States were last checked against GitHub and Linear on 2026-10-30.
 
 ## How far from GA
 
@@ -19,12 +19,12 @@ Counts the projects marked Must in each stream. A project counts as done only wh
 | Stream | Done | Bar | In progress | Not started |
 | --- | --- | --- | --- | --- |
 | Foundations and breaking changes | 6 of 8 (75%) | `████████░░` | 2 | 0 |
-| Upgrade path from Prisma 7 | 2 of 7 (29%) | `███░░░░░░░` | 3 | 2 |
+| Upgrade path from Prisma 7 | 5 of 7 (71%) | `███████░░░` | 0 | 2 |
 | Editor and tools | 3 of 6 (50%) | `█████░░░░░` | 1 | 2 |
 | Query features | 8 of 11 (73%) | `███████░░░` | 1 | 2 |
 | Docs and the new user's first hour | 1 of 5 (20%) | `██░░░░░░░░` | 3 | 1 |
 | Work found along the way | 1 of 2 (50%) | `█████░░░░░` | 0 | 1 |
-| **All streams** | **21 of 39 (54%)** | `█████░░░░░` | **10** | **8** |
+| **All streams** | **24 of 39 (62%)** | `██████░░░░` | **7** | **8** |
 
 ## Stream 1: Foundations and breaking changes
 
@@ -36,7 +36,7 @@ GA is the last chance to make breaking changes, so this stream decides the date.
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | ✅ 6/6 | Finish ADR 254: data types own column types | Must | Will | Done 2026-10-20. The cast rule (TML-3389) merged last. Bugs found along the way stay in the project's backlog |  |
 | 2 | ✅ 2/2 | One CLI and one config file | Must | Will | Done 2026-10-08 |  |
-| 3 | 🔄 4/6 | Early MySQL attempt, to find shared code that assumes PostgreSQL | Must | Will | 6 slices. Merged 2026-10-22: every database's packages in one folder, and a MySQL target that emits a contract and reads a MySQL database's structure. MySQL migrations, `db verify` and `db sign` merged 2026-10-23. ORM reads merged 2026-10-28. A PR moving both MySQL drivers onto the `mariadb` package, with every value sent in a prepared statement, is in review. Left: ORM writes without `RETURNING` (TML-3696), MariaDB (TML-3697) | Review the drivers PR, then build TML-3696 |
+| 3 | 🔄 4/6 | Early MySQL attempt, to find shared code that assumes PostgreSQL | Must | Will | 6 slices. Merged 2026-10-22: every database's packages in one folder, and a MySQL target that emits a contract and reads a MySQL database's structure. MySQL migrations, `db verify` and `db sign` merged 2026-10-23. ORM reads merged 2026-10-28. Both MySQL drivers moved onto the `mariadb` package, with every value sent in a prepared statement, merged 2026-10-29. Left: ORM writes without `RETURNING` (TML-3696), MariaDB (TML-3697) | Build TML-3696 |
 | 4 | ✅ 6/6 | SQL expression literals | Must | Will | Done 2026-10-12 |  |
 | 5 | ✅ 5/5 | PSL mixins, then remove field presets; generated values become `@onCreate` and `@onUpdate`, and type aliases become an authoring shorthand | Must | Serhii (mixins), Will (TML-3607) | Done 2026-10-27. Mixins done 2026-10-14. ADR 275 merged 2026-10-19. TML-3607's 3 slices merged 2026-10-20, 2026-10-22 and 2026-10-27; the last removed field presets |  |
 | 6 | ✅ 1/1 | Remove `@noCheck` and `.noCheck()` | Must | Will | Done 2026-10-16 |  |
@@ -45,17 +45,17 @@ GA is the last chance to make breaking changes, so this stream decides the date.
 
 ## Stream 2: Upgrade path from Prisma 7
 
-**GA readiness:** 2 of 7 Must projects done (29%). 3 in progress, 2 not started.
+**GA readiness:** 5 of 7 Must projects done (71%). 0 in progress, 2 not started.
 
 Test: an existing Prisma 7 database can be signed by Prisma 8.
 
 | # | Progress | Project | GA | Owner | Status | Next |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | 🔄 9/11 | Close every urgent and high upgrade issue | Must | Will | 9 closed, 2 open. The generated-values PR merged 2026-10-19 and closed 3 | The `contract print` issues TML-3323 (ADR first) and TML-3326 |
-| 2 | 🔄 6/7 | Prisma 8 owns migrations in a Prisma 7 project that still reads `schema.prisma` | Must | Will | Proven. Referential action changes, primary key changes, and Prisma 7's migrate commands naming their Prisma 8 replacement merged 2026-10-22. One gap is left: the datasource's extensions list (TML-3460, backlog) | Build TML-3460 |
+| 1 | ✅ 9/9 | Close every urgent and high issue in the Prisma 7 contract source | Must | Will | Done. The "Prisma 7 contract source: gaps and defects" project has no open Urgent or High issue (checked 2026-10-29). The two `contract print` issues, TML-3323 and TML-3326, were counted here by mistake and moved to stream 6 |  |
+| 2 | ✅ 7/7 | Prisma 8 owns migrations in a Prisma 7 project that still reads `schema.prisma` | Must | Will | Done 2026-10-29. The last gap, the datasource's extensions list (TML-3460), merged 2026-10-29: contracts declare Postgres extensions, packs declare theirs, and `db sign` adopts databases that use pgvector, PostGIS or ParadeDB |  |
 | 3 | ✅ 7/7 | Storage a model does not map: a table may hold columns its model does not map, and a table may have no model | Must | Will | Done 2026-10-13: 4 slices, ADR 267, the fix for a model with no fields, and the close-out merged |  |
 | 4 | ⏳ | Upgrade guide rewrite | Must | Will | Ticket in backlog. One known error in the guide |  |
-| 5 | 🔄 0/6 | Codecs for `citext`, `bit`, `varbit`, `xml`, `oid`, `money` | Must | Will | Started 2026-10-27 (TML-3270). `money` joined this row from row 9. Split in two PRs. The first, `bit`, `varbit`, `xml`, `oid` and `money`, is in review. `citext` follows in a second PR, as a new extension pack, being built | Review the first PR |
+| 5 | ✅ 6/6 | Codecs for `citext`, `bit`, `varbit`, `xml`, `oid`, `money` | Must | Will | Done 2026-10-30. `bit`, `varbit`, `xml`, `oid` and `money` merged 2026-10-29. `citext`, as a new extension pack, merged 2026-10-30 |  |
 | 6 | ✅ 3/3 | Columns whose type has no codec | Must | Will | Done 2026-10-21 (Will). ADR 273: such a column is a raw column, `Raw("...")` in a Prisma 8 schema, and a Prisma 7 `Unsupported(...)` field is read as one. The close-out merged 2026-10-21 |  |
 | 7 | ⏳ | Adopt a Prisma 7 database without changing it: the enum membership check | Must | Will | Not designed |  |
 | 8 | ⏳ | Medium and low upgrade issues | Later | Will | Backlog | |
@@ -124,6 +124,7 @@ Work found after the plan was made goes here, so the first five streams keep the
 | # | Progress | Project | GA | Owner | Status | Next |
 | --- | --- | --- | --- | --- | --- | --- |
 | 1 | ⏳ | Remove the `unbound` / `__unbound__` namespace alias, keeping one name | Not decided | Serhii | Serhii proposed it in a docs PR to the RC plan, not merged. Not started | |
+| 1b | ⏳ | `contract print` writes a relation into another contract space (TML-3326), and an extension pack says how its entity kind is printed (TML-3323, needs an ADR first) | Not decided | Will | Backlog. Moved from stream 2 row 1 on 2026-10-29 | |
 | 2 | ⏳ | Shrink the generated contract files, so a PR's line count shows the change and not the regenerated `contract.d.ts` and `contract.json` | Must | Will | Not started, no ticket. Migration snapshots in every user's `migrations/` folder hold both files. Possibly minify them or strip whitespace (Will, 2026-10-21) |  |
 | 3 | ✅ 6/6 | Date and time usability: `DateTime`, `Date`, `Time` and `Duration` convenience types over the explicit database types; string codecs return ISO strings; a Prisma 7 `@default(now())` keeps filling the value on create | Must | Will | Started 2026-10-21. The design (ADR 279) and slices TML-3418, TML-3711, TML-3713 and TML-3719 merged 2026-10-23. TML-3710 was cancelled. The convenience types (TML-3712) merged 2026-10-28. Done 2026-10-29; the close-out merged that day |  |
 
