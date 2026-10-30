@@ -67,6 +67,11 @@ describe('the extension MongoDriver and MongoQueryable detection', () => {
     ['a parameter typed with it', 'async executeDdl(driver: MongoDriver, command: Command) {'],
     ['an optional field typed with it', '  readonly driver?: MongoDriver;'],
     ['a return type', 'function createMockDriver(): MongoDriver {'],
+    ['a promised return type', 'async function createDriver(): Promise<MongoDriver> {'],
+    [
+      'a field typed with a generic of it',
+      '  readonly drivers: ReadonlyArray<MongoDriver<Binding>>;',
+    ],
     ['an interface that extends it', 'interface CustomDriver extends MongoDriver {'],
     [
       'an interface that extends it with a binding',
@@ -82,6 +87,8 @@ describe('the extension MongoDriver and MongoQueryable detection', () => {
     ['a cast to it', '} as unknown as MongoDriver;'],
     ['a longer name', 'class Stub implements MongoDriverFactory {'],
     ['a type argument', 'const drivers = new Map<string, MongoDriver>();'],
+    ['a promised MongoQueryable', 'async function createDriver(): Promise<MongoQueryable> {'],
+    ['a generic of a longer name', 'function create(): Promise<MongoDriverFactory> {'],
     ['an interface that extends MongoQueryable', 'interface CustomDriver extends MongoQueryable {'],
     [
       'an interface that extends a longer name',

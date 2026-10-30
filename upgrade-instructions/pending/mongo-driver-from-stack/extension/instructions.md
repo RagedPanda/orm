@@ -10,12 +10,13 @@ changes:
         - '[''"]@internal/driver-mongo[''"]'
   - id: mongo-driver-connect
     summary: |
-      `@internal/mongo-lowering` adds `MongoQueryable`, with `execute` and `run`, as `SqlQueryable` is for SQL. `MongoDriver<TBinding = void>` extends it and adds `connect(binding)` and `close()`, as `SqlDriver<TBinding>` does. `MongoControlDriverInstance` extends `MongoQueryable`, not `MongoDriver`, so a control driver has no `connect`. `executeDdl`, `MongoRunnerDependencies.driver` and the migration runner now take `MongoQueryable`; `createMongoRuntime` takes `MongoDriver<unknown>`. Type code that only sends commands, or that receives a control driver, as `MongoQueryable`. A runtime driver you implement as `MongoDriver` adds `connect`. The detection matches classes that implement `MongoDriver`, interfaces and classes that extend it, type aliases that name it, and values, parameters and return types annotated or checked as `MongoDriver`.
+      `@internal/mongo-lowering` adds `MongoQueryable`, with `execute` and `run`, as `SqlQueryable` is for SQL. `MongoDriver<TBinding = void>` extends it and adds `connect(binding)` and `close()`, as `SqlDriver<TBinding>` does. `MongoControlDriverInstance` extends `MongoQueryable`, not `MongoDriver`, so a control driver has no `connect`. `executeDdl`, `MongoRunnerDependencies.driver` and the migration runner now take `MongoQueryable`; `createMongoRuntime` takes `MongoDriver<unknown>`. Type code that only sends commands, or that receives a control driver, as `MongoQueryable`. A runtime driver you implement as `MongoDriver` adds `connect`. The detection matches classes that implement `MongoDriver`, interfaces and classes that extend it, type aliases that name it, and values, parameters and return types annotated or checked as `MongoDriver`, also inside a generic such as `Promise<MongoDriver>`.
     detection:
       glob: "**/*.{ts,mts,cts,tsx}"
       matches:
         - 'implements\s[^{]*(?<![\w$])MongoDriver(?![\w$])'
         - '[\w$)]\??\s*:\s*MongoDriver(?![\w$])'
+        - '[\w$)]\??\s*:\s*[\w$.]+<[^;{=]*(?<![\w$])MongoDriver(?![\w$])'
         - 'satisfies\s+MongoDriver(?![\w$])'
         - '(?:interface|class)\s[^{]*extends\s[^{]*(?<![\w$])MongoDriver(?![\w$])'
         - 'type\s+[\w$]+(?:<[^>]*>)?\s*=[^;]*(?<![\w$])MongoDriver(?![\w$])'
